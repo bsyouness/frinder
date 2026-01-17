@@ -14,9 +14,18 @@ struct RadarView: View {
 
                 if !radarViewModel.isLocationAuthorized {
                     LocationPermissionView()
-                } else if radarViewModel.friends.isEmpty {
-                    EmptyStateView()
                 } else {
+                    // Landmark dots (shown behind friends)
+                    if radarViewModel.showLandmarks {
+                        ForEach(radarViewModel.landmarks) { landmark in
+                            LandmarkDotView(
+                                landmark: landmark,
+                                distance: radarViewModel.landmarkDistance(for: landmark),
+                                position: radarViewModel.landmarkPosition(for: landmark, in: geometry.size)
+                            )
+                        }
+                    }
+
                     // Friend dots
                     ForEach(radarViewModel.friends) { friend in
                         FriendDotView(
@@ -24,6 +33,11 @@ struct RadarView: View {
                             userLocation: radarViewModel.currentLocation,
                             position: radarViewModel.friendPosition(for: friend, in: geometry.size)
                         )
+                    }
+
+                    // Empty state only if no friends AND landmarks are hidden
+                    if radarViewModel.friends.isEmpty && !radarViewModel.showLandmarks {
+                        EmptyStateView()
                     }
                 }
 
@@ -99,6 +113,43 @@ struct DefaultAvatarView: View {
                     .stroke(.white.opacity(0.5), lineWidth: 2)
             )
             .shadow(color: .blue.opacity(0.5), radius: 8)
+    }
+}
+
+struct LandmarkDotView: View {
+    let landmark: Landmark
+    let distance: String?
+    let position: CGPoint
+
+    var body: some View {
+        VStack(spacing: 2) {
+            // Landmark icon
+            Text(landmark.icon)
+                .font(.system(size: 28))
+                .shadow(color: .black.opacity(0.5), radius: 2)
+
+            // Name
+            Text(landmark.name)
+                .font(.system(size: 9, weight: .medium))
+                .foregroundStyle(.white.opacity(0.85))
+                .lineLimit(1)
+
+            // Distance
+            if let distance = distance {
+                Text(distance)
+                    .font(.system(size: 8))
+                    .foregroundStyle(.white.opacity(0.6))
+            }
+        }
+        .padding(.horizontal, 4)
+        .padding(.vertical, 2)
+        .background(
+            RoundedRectangle(cornerRadius: 6)
+                .fill(.black.opacity(0.4))
+        )
+        .position(position)
+        .animation(.easeOut(duration: 0.1), value: position.x)
+        .animation(.easeOut(duration: 0.1), value: position.y)
     }
 }
 

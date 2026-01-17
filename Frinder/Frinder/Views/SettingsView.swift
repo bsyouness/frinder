@@ -40,6 +40,20 @@ struct SettingsView: View {
                             Text(unit.displayName).tag(unit)
                         }
                     }
+
+                    Toggle("Show Landmarks", isOn: $settings.showLandmarks)
+                }
+
+                // Landmarks info section
+                Section {
+                    HStack {
+                        Text("Landmarks")
+                        Spacer()
+                        Text("\(Landmark.allLandmarks.count) worldwide")
+                            .foregroundStyle(.secondary)
+                    }
+                } footer: {
+                    Text("See famous landmarks like the Eiffel Tower, Statue of Liberty, and more on your radar.")
                 }
 
                 // About section

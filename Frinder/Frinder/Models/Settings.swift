@@ -38,6 +38,12 @@ class AppSettings: ObservableObject {
         }
     }
 
+    @Published var showLandmarks: Bool {
+        didSet {
+            UserDefaults.standard.set(showLandmarks, forKey: "showLandmarks")
+        }
+    }
+
     static let shared = AppSettings()
 
     private init() {
@@ -47,5 +53,8 @@ class AppSettings: ObservableObject {
         } else {
             self.distanceUnit = .kilometers
         }
+
+        // Default to showing landmarks
+        self.showLandmarks = UserDefaults.standard.object(forKey: "showLandmarks") as? Bool ?? true
     }
 }

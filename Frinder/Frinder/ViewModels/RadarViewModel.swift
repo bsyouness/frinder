@@ -9,6 +9,9 @@ class RadarViewModel: ObservableObject {
     @Published var currentLocation: CLLocation?
     @Published var isLocationAuthorized = false
 
+    let landmarks = Landmark.allLandmarks
+    var showLandmarks: Bool { AppSettings.shared.showLandmarks }
+
     private let locationService = LocationService.shared
     private let motionService = MotionService.shared
     private let friendService = FriendService.shared
@@ -103,5 +106,42 @@ class RadarViewModel: ObservableObject {
         let y = size.height / 2 - radius * cos(angleRadians)
 
         return CGPoint(x: x, y: y)
+    }
+
+    /// Calculate the position of a landmark on the radar view
+    /// Returns (x, y) as percentages from center (-1 to 1)
+    func landmarkPosition(for landmark: Landmark, in size: CGSize) -> CGPoint {
+        guard let userLocation = currentLocation else {
+            return .zero
+        }
+
+        let bearing = landmark.bearing(from: userLocation.coordinate)
+
+        // Calculate angle relative to device heading
+        let relativeAngle = (bearing - deviceHeading + 360).truncatingRemainder(dividingBy: 360)
+        let angleRadians = relativeAngle * .pi / 180
+
+        // Calculate distance factor (closer landmarks are more centered)
+        let distance = landmark.distance(from: userLocation.coordinate)
+        let maxDistance: Double = 20000000 // 20,000km max (half earth circumference)
+        let normalizedDistance = min(distance / maxDistance, 1.0)
+
+        // Use logarithmic scale for better distribution
+        let radiusFactor = 0.15 + (log10(normalizedDistance * 99 + 1) * 0.425)
+
+        let radius = min(size.width, size.height) / 2 * radiusFactor * 0.9
+
+        // Calculate position (0 degrees = up, clockwise)
+        let x = size.width / 2 + radius * sin(angleRadians)
+        let y = size.height / 2 - radius * cos(angleRadians)
+
+        return CGPoint(x: x, y: y)
+    }
+
+    /// Get distance to landmark formatted as string
+    func landmarkDistance(for landmark: Landmark) -> String? {
+        guard let userLocation = currentLocation else { return nil }
+        let distance = landmark.distance(from: userLocation.coordinate)
+        return AppSettings.shared.distanceUnit.format(meters: distance)
     }
 }
