@@ -1,0 +1,474 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		000000000000000000000001 /* FrinderApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000001 /* FrinderApp.swift */; };
+		000000000000000000000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000002 /* ContentView.swift */; };
+		000000000000000000000003 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000003 /* Assets.xcassets */; };
+		000000000000000000000004 /* User.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000004 /* User.swift */; };
+		000000000000000000000005 /* Friend.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000005 /* Friend.swift */; };
+		000000000000000000000006 /* Settings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000006 /* Settings.swift */; };
+		000000000000000000000007 /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000007 /* AuthService.swift */; };
+		000000000000000000000008 /* LocationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000008 /* LocationService.swift */; };
+		000000000000000000000009 /* MotionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000009 /* MotionService.swift */; };
+		000000000000000000000010 /* FriendService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000010 /* FriendService.swift */; };
+		000000000000000000000011 /* AuthViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000011 /* AuthViewModel.swift */; };
+		000000000000000000000012 /* RadarViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000012 /* RadarViewModel.swift */; };
+		000000000000000000000013 /* FriendsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000013 /* FriendsViewModel.swift */; };
+		000000000000000000000014 /* AuthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000014 /* AuthView.swift */; };
+		000000000000000000000015 /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000015 /* MainTabView.swift */; };
+		000000000000000000000016 /* RadarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000016 /* RadarView.swift */; };
+		000000000000000000000017 /* FriendsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000017 /* FriendsView.swift */; };
+		000000000000000000000018 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000018 /* SettingsView.swift */; };
+		000000000000000000000019 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 200000000000000000000001 /* FirebaseAuth */; };
+		000000000000000000000020 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 200000000000000000000002 /* FirebaseFirestore */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		100000000000000000000000 /* Frinder.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Frinder.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		100000000000000000000001 /* FrinderApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrinderApp.swift; sourceTree = "<group>"; };
+		100000000000000000000002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		100000000000000000000003 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		100000000000000000000004 /* User.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = User.swift; sourceTree = "<group>"; };
+		100000000000000000000005 /* Friend.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Friend.swift; sourceTree = "<group>"; };
+		100000000000000000000006 /* Settings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Settings.swift; sourceTree = "<group>"; };
+		100000000000000000000007 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
+		100000000000000000000008 /* LocationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationService.swift; sourceTree = "<group>"; };
+		100000000000000000000009 /* MotionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MotionService.swift; sourceTree = "<group>"; };
+		100000000000000000000010 /* FriendService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FriendService.swift; sourceTree = "<group>"; };
+		100000000000000000000011 /* AuthViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthViewModel.swift; sourceTree = "<group>"; };
+		100000000000000000000012 /* RadarViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RadarViewModel.swift; sourceTree = "<group>"; };
+		100000000000000000000013 /* FriendsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FriendsViewModel.swift; sourceTree = "<group>"; };
+		100000000000000000000014 /* AuthView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthView.swift; sourceTree = "<group>"; };
+		100000000000000000000015 /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
+		100000000000000000000016 /* RadarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RadarView.swift; sourceTree = "<group>"; };
+		100000000000000000000017 /* FriendsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FriendsView.swift; sourceTree = "<group>"; };
+		100000000000000000000018 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		100000000000000000000019 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		300000000000000000000001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				000000000000000000000019 /* FirebaseAuth in Frameworks */,
+				000000000000000000000020 /* FirebaseFirestore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		400000000000000000000001 = {
+			isa = PBXGroup;
+			children = (
+				400000000000000000000002 /* Frinder */,
+				400000000000000000000003 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		400000000000000000000002 /* Frinder */ = {
+			isa = PBXGroup;
+			children = (
+				100000000000000000000001 /* FrinderApp.swift */,
+				100000000000000000000002 /* ContentView.swift */,
+				400000000000000000000004 /* Models */,
+				400000000000000000000005 /* Views */,
+				400000000000000000000006 /* ViewModels */,
+				400000000000000000000007 /* Services */,
+				100000000000000000000003 /* Assets.xcassets */,
+				100000000000000000000019 /* Info.plist */,
+			);
+			path = Frinder;
+			sourceTree = "<group>";
+		};
+		400000000000000000000003 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				100000000000000000000000 /* Frinder.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		400000000000000000000004 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				100000000000000000000004 /* User.swift */,
+				100000000000000000000005 /* Friend.swift */,
+				100000000000000000000006 /* Settings.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		400000000000000000000005 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				100000000000000000000014 /* AuthView.swift */,
+				100000000000000000000015 /* MainTabView.swift */,
+				100000000000000000000016 /* RadarView.swift */,
+				100000000000000000000017 /* FriendsView.swift */,
+				100000000000000000000018 /* SettingsView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		400000000000000000000006 /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				100000000000000000000011 /* AuthViewModel.swift */,
+				100000000000000000000012 /* RadarViewModel.swift */,
+				100000000000000000000013 /* FriendsViewModel.swift */,
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		400000000000000000000007 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				100000000000000000000007 /* AuthService.swift */,
+				100000000000000000000008 /* LocationService.swift */,
+				100000000000000000000009 /* MotionService.swift */,
+				100000000000000000000010 /* FriendService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		500000000000000000000001 /* Frinder */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 600000000000000000000001 /* Build configuration list for PBXNativeTarget "Frinder" */;
+			buildPhases = (
+				500000000000000000000002 /* Sources */,
+				300000000000000000000001 /* Frameworks */,
+				500000000000000000000003 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Frinder;
+			packageProductDependencies = (
+				200000000000000000000001 /* FirebaseAuth */,
+				200000000000000000000002 /* FirebaseFirestore */,
+			);
+			productName = Frinder;
+			productReference = 100000000000000000000000 /* Frinder.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		700000000000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					500000000000000000000001 = {
+						CreatedOnToolsVersion = 15.0;
+					};
+				};
+			};
+			buildConfigurationList = 600000000000000000000002 /* Build configuration list for PBXProject "Frinder" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 400000000000000000000001;
+			packageReferences = (
+				800000000000000000000001 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+			);
+			productRefGroup = 400000000000000000000003 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				500000000000000000000001 /* Frinder */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		500000000000000000000003 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				000000000000000000000003 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		500000000000000000000002 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				000000000000000000000001 /* FrinderApp.swift in Sources */,
+				000000000000000000000002 /* ContentView.swift in Sources */,
+				000000000000000000000004 /* User.swift in Sources */,
+				000000000000000000000005 /* Friend.swift in Sources */,
+				000000000000000000000006 /* Settings.swift in Sources */,
+				000000000000000000000007 /* AuthService.swift in Sources */,
+				000000000000000000000008 /* LocationService.swift in Sources */,
+				000000000000000000000009 /* MotionService.swift in Sources */,
+				000000000000000000000010 /* FriendService.swift in Sources */,
+				000000000000000000000011 /* AuthViewModel.swift in Sources */,
+				000000000000000000000012 /* RadarViewModel.swift in Sources */,
+				000000000000000000000013 /* FriendsViewModel.swift in Sources */,
+				000000000000000000000014 /* AuthView.swift in Sources */,
+				000000000000000000000015 /* MainTabView.swift in Sources */,
+				000000000000000000000016 /* RadarView.swift in Sources */,
+				000000000000000000000017 /* FriendsView.swift in Sources */,
+				000000000000000000000018 /* SettingsView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		900000000000000000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		900000000000000000000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		900000000000000000000003 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Frinder/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Frinder;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.social-networking";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Frinder needs your location to show your friends where you are and to display where they are relative to you.";
+				INFOPLIST_KEY_NSMotionUsageDescription = "Frinder uses motion sensors to detect which direction you're pointing your phone so friends appear in the correct position on screen.";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.frinder.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		900000000000000000000004 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Frinder/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Frinder;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.social-networking";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Frinder needs your location to show your friends where you are and to display where they are relative to you.";
+				INFOPLIST_KEY_NSMotionUsageDescription = "Frinder uses motion sensors to detect which direction you're pointing your phone so friends appear in the correct position on screen.";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.frinder.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		600000000000000000000001 /* Build configuration list for PBXNativeTarget "Frinder" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				900000000000000000000003 /* Debug */,
+				900000000000000000000004 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		600000000000000000000002 /* Build configuration list for PBXProject "Frinder" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				900000000000000000000001 /* Debug */,
+				900000000000000000000002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		800000000000000000000001 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 10.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		200000000000000000000001 /* FirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 800000000000000000000001 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAuth;
+		};
+		200000000000000000000002 /* FirebaseFirestore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 800000000000000000000001 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFirestore;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 700000000000000000000001 /* Project object */;
+}
