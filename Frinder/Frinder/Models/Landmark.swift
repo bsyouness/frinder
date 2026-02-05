@@ -75,12 +75,6 @@ extension Landmark {
 
         // North America
         Landmark(
-            id: "statue_of_liberty",
-            name: "Statue of Liberty",
-            icon: "🗽",
-            coordinate: CLLocationCoordinate2D(latitude: 40.6892, longitude: -74.0445)
-        ),
-        Landmark(
             id: "mount_rushmore",
             name: "Mount Rushmore",
             icon: "🏔️",
@@ -148,13 +142,6 @@ extension Landmark {
             icon: "🛕",
             coordinate: CLLocationCoordinate2D(latitude: 13.4125, longitude: 103.8670)
         ),
-        Landmark(
-            id: "petronas_towers",
-            name: "Petronas Towers",
-            icon: "🏬",
-            coordinate: CLLocationCoordinate2D(latitude: 3.1578, longitude: 101.7117)
-        ),
-
         // Middle East & Africa
         Landmark(
             id: "pyramids_giza",
@@ -162,13 +149,6 @@ extension Landmark {
             icon: "🔺",
             coordinate: CLLocationCoordinate2D(latitude: 29.9792, longitude: 31.1342)
         ),
-        Landmark(
-            id: "petra",
-            name: "Petra",
-            icon: "🏜️",
-            coordinate: CLLocationCoordinate2D(latitude: 30.3285, longitude: 35.4444)
-        ),
-
         // South America
         Landmark(
             id: "christ_redeemer",
@@ -189,12 +169,6 @@ extension Landmark {
             name: "Sydney Opera House",
             icon: "🎭",
             coordinate: CLLocationCoordinate2D(latitude: -33.8568, longitude: 151.2153)
-        ),
-        Landmark(
-            id: "uluru",
-            name: "Uluru",
-            icon: "🪨",
-            coordinate: CLLocationCoordinate2D(latitude: -25.3444, longitude: 131.0369)
         )
     ]
 }
