@@ -111,7 +111,7 @@ enum GeoMath {
     /// Calculate vertical screen position for a target
     /// - Parameters:
     ///   - elevation: Elevation angle in radians (negative = below horizon)
-    ///   - devicePitch: Device pitch in radians
+    ///   - devicePitch: Device pitch in radians (from CoreMotion, π/2 when upright)
     ///   - verticalFOV: Vertical field of view (degrees)
     ///   - screenHeight: Screen height in points
     /// - Returns: Y position on screen (0 = top, screenHeight = bottom)
@@ -121,8 +121,15 @@ enum GeoMath {
         verticalFOV: Double,
         screenHeight: Double
     ) -> Double {
+        // CoreMotion pitch: 0 = flat, π/2 = upright, π = flat face down
+        // Adjust so that "upright" (π/2) is our neutral/zero position
+        let neutralPitch = Double.pi / 2.0
+        let adjustedPitch = devicePitch - neutralPitch
+
         let halfVFOV = verticalFOV / 2.0 * .pi / 180.0
-        let relativeElevation = elevation - devicePitch
+        // How far is the target from where we're looking?
+        let relativeElevation = elevation - adjustedPitch
+        // Map to screen: negative = below view center = lower on screen (higher Y)
         let normalizedY = 0.5 - (relativeElevation / (2.0 * halfVFOV))
         return normalizedY * screenHeight
     }

@@ -267,31 +267,37 @@ final class GeoMathTests: XCTestCase {
     }
 
     func testScreenYHorizon() {
-        // Target at horizon (0° elevation), device level (0° pitch)
-        let y = GeoMath.screenY(elevation: 0, devicePitch: 0, verticalFOV: 90, screenHeight: 800)
-        XCTAssertEqual(y, 400, accuracy: 1, "Horizon should be at screen center")
+        // Target at horizon (0° elevation), device upright (π/2 pitch = neutral)
+        let neutralPitch = Double.pi / 2.0
+        let y = GeoMath.screenY(elevation: 0, devicePitch: neutralPitch, verticalFOV: 90, screenHeight: 800)
+        XCTAssertEqual(y, 400, accuracy: 1, "Horizon should be at screen center when phone upright")
     }
 
     func testScreenYBelowHorizon() {
-        // Target 20° below horizon, device level
+        // Target 20° below horizon, device upright (neutral)
+        let neutralPitch = Double.pi / 2.0
         let elevation = -20.0.toRadians()
-        let y = GeoMath.screenY(elevation: elevation, devicePitch: 0, verticalFOV: 90, screenHeight: 800)
+        let y = GeoMath.screenY(elevation: elevation, devicePitch: neutralPitch, verticalFOV: 90, screenHeight: 800)
 
         // -20° / 90° FOV = -0.22 from center, so Y should be > 400
         XCTAssertGreaterThan(y, 400, "Below horizon should be below screen center")
     }
 
     func testScreenYDeviceTiltedDown() {
-        // Target at horizon, device tilted down 20° -> target appears above center
-        let devicePitch = -20.0.toRadians()
+        // Target at horizon, device tilted forward (looking down)
+        // Tilting forward from upright: pitch decreases from π/2
+        let neutralPitch = Double.pi / 2.0
+        let devicePitch = neutralPitch - 20.0.toRadians()  // Tilted 20° forward
         let y = GeoMath.screenY(elevation: 0, devicePitch: devicePitch, verticalFOV: 90, screenHeight: 800)
 
         XCTAssertLessThan(y, 400, "Tilting down should move horizon up on screen")
     }
 
     func testScreenYDeviceTiltedUp() {
-        // Target at horizon, device tilted up 20° -> target appears below center
-        let devicePitch = 20.0.toRadians()
+        // Target at horizon, device tilted back (looking up)
+        // Tilting back from upright: pitch increases from π/2
+        let neutralPitch = Double.pi / 2.0
+        let devicePitch = neutralPitch + 20.0.toRadians()  // Tilted 20° back
         let y = GeoMath.screenY(elevation: 0, devicePitch: devicePitch, verticalFOV: 90, screenHeight: 800)
 
         XCTAssertGreaterThan(y, 400, "Tilting up should move horizon down on screen")
