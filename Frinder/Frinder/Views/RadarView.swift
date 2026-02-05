@@ -13,7 +13,13 @@ struct RadarView: View {
                     .ignoresSafeArea()
 
                 if !radarViewModel.isLocationAuthorized {
-                    LocationPermissionView()
+                    if radarViewModel.locationAuthorizationStatus == .notDetermined {
+                        PrePermissionView(onRequestPermission: {
+                            radarViewModel.requestLocationAuthorization()
+                        })
+                    } else {
+                        LocationDeniedView()
+                    }
                 } else {
                     // Landmark dots (shown behind friends)
                     if radarViewModel.showLandmarks {
@@ -176,7 +182,69 @@ struct CompassIndicator: View {
     }
 }
 
-struct LocationPermissionView: View {
+struct PrePermissionView: View {
+    let onRequestPermission: () -> Void
+
+    var body: some View {
+        VStack(spacing: 24) {
+            Image(systemName: "location.circle.fill")
+                .font(.system(size: 64))
+                .foregroundStyle(.blue)
+
+            Text("Find Your Friends")
+                .font(.title2)
+                .fontWeight(.bold)
+                .foregroundStyle(.white)
+
+            VStack(spacing: 12) {
+                FeatureRow(icon: "dot.radiowaves.left.and.right", text: "See friends' locations on your radar")
+                FeatureRow(icon: "location.north.fill", text: "Point your phone to find them")
+                FeatureRow(icon: "arrow.triangle.swap", text: "Share your location with friends")
+            }
+            .padding(.horizontal, 24)
+
+            Text("Frinder needs your location to show where your friends are relative to you.")
+                .font(.subheadline)
+                .foregroundStyle(.gray)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 32)
+
+            Button(action: onRequestPermission) {
+                HStack {
+                    Image(systemName: "location.fill")
+                    Text("Enable Location")
+                }
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(Color.blue)
+                .foregroundStyle(.white)
+                .cornerRadius(12)
+            }
+            .padding(.horizontal, 32)
+            .padding(.top, 8)
+        }
+    }
+}
+
+struct FeatureRow: View {
+    let icon: String
+    let text: String
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.system(size: 20))
+                .foregroundStyle(.blue)
+                .frame(width: 32)
+            Text(text)
+                .font(.subheadline)
+                .foregroundStyle(.white.opacity(0.9))
+            Spacer()
+        }
+    }
+}
+
+struct LocationDeniedView: View {
     var body: some View {
         VStack(spacing: 16) {
             Image(systemName: "location.slash")

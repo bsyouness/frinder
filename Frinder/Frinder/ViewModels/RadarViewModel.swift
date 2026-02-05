@@ -8,6 +8,7 @@ class RadarViewModel: ObservableObject {
     @Published var deviceHeading: Double = 0
     @Published var currentLocation: CLLocation?
     @Published var isLocationAuthorized = false
+    @Published var locationAuthorizationStatus: CLAuthorizationStatus = .notDetermined
 
     let landmarks = Landmark.allLandmarks
     var showLandmarks: Bool { AppSettings.shared.showLandmarks }
@@ -47,15 +48,20 @@ class RadarViewModel: ObservableObject {
         // Bind authorization status
         locationService.$authorizationStatus
             .receive(on: DispatchQueue.main)
-            .map { status in
-                status == .authorizedWhenInUse || status == .authorizedAlways
+            .sink { [weak self] status in
+                self?.locationAuthorizationStatus = status
+                self?.isLocationAuthorized = (status == .authorizedWhenInUse || status == .authorizedAlways)
             }
-            .assign(to: &$isLocationAuthorized)
+            .store(in: &cancellables)
 
         // Bind friends from service
         friendService.$friends
             .receive(on: DispatchQueue.main)
             .assign(to: &$friends)
+    }
+
+    func requestLocationAuthorization() {
+        locationService.requestAuthorization()
     }
 
     func startTracking(userId: String) {
