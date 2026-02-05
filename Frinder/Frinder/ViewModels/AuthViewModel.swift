@@ -9,6 +9,7 @@ class AuthViewModel: ObservableObject {
     @Published var isAuthenticated = false
     @Published var isLoading = false
     @Published var errorMessage: String?
+    @Published var isOffline = false
 
     private let authService = AuthService.shared
 
@@ -136,9 +137,10 @@ class AuthViewModel: ObservableObject {
     private func fetchCurrentUser() async {
         do {
             currentUser = try await authService.fetchCurrentUser()
+            isOffline = false
         } catch {
             print("Error fetching user: \(error)")
-            errorMessage = "Unable to load profile: \(error.localizedDescription)"
+            isOffline = true
         }
     }
 }

@@ -9,7 +9,27 @@ struct SettingsView: View {
             List {
                 // Profile section
                 Section("Profile") {
-                    if let user = authViewModel.currentUser {
+                    if authViewModel.isOffline {
+                        HStack(spacing: 12) {
+                            Circle()
+                                .fill(.orange.opacity(0.3))
+                                .frame(width: 50, height: 50)
+                                .overlay(
+                                    Image(systemName: "wifi.slash")
+                                        .font(.title2)
+                                        .foregroundStyle(.orange)
+                                )
+
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Working Offline")
+                                    .font(.headline)
+                                Text("Profile unavailable")
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        .padding(.vertical, 4)
+                    } else if let user = authViewModel.currentUser {
                         HStack(spacing: 12) {
                             Circle()
                                 .fill(.blue.opacity(0.3))

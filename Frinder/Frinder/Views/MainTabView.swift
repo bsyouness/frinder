@@ -36,7 +36,28 @@ struct MainTabView: View {
                 radarViewModel.stopTracking()
             }
 
-            // Error banner
+            // Offline banner (non-dismissable)
+            if authViewModel.isOffline {
+                VStack {
+                    HStack {
+                        Image(systemName: "wifi.slash")
+                            .foregroundStyle(.white)
+                        Text("Offline mode - You can only see landmarks")
+                            .font(.caption)
+                            .foregroundStyle(.white)
+                        Spacer()
+                    }
+                    .padding(12)
+                    .background(Color.orange)
+                    .cornerRadius(8)
+                    .padding(.horizontal)
+                    .padding(.top, 50)
+
+                    Spacer()
+                }
+            }
+
+            // Error banner (dismissable)
             if let error = authViewModel.errorMessage {
                 VStack {
                     HStack {
@@ -57,7 +78,7 @@ struct MainTabView: View {
                     .background(Color.red.opacity(0.9))
                     .cornerRadius(8)
                     .padding(.horizontal)
-                    .padding(.top, 50)
+                    .padding(.top, authViewModel.isOffline ? 100 : 50)
 
                     Spacer()
                 }
