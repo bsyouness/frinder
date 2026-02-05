@@ -6,6 +6,7 @@ import Combine
 class RadarViewModel: ObservableObject {
     @Published var friends: [Friend] = []
     @Published var deviceHeading: Double = 0
+    @Published var devicePitch: Double = 0 // Tilt forward/backward in radians
     @Published var currentLocation: CLLocation?
     @Published var isLocationAuthorized = false
     @Published var locationAuthorizationStatus: CLAuthorizationStatus = .notDetermined
@@ -75,6 +76,14 @@ class RadarViewModel: ObservableObject {
             }
             .store(in: &cancellables)
 
+        // Bind pitch updates (tilt forward/backward)
+        motionService.$pitch
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] pitch in
+                self?.devicePitch = pitch
+            }
+            .store(in: &cancellables)
+
         // Bind authorization status
         locationService.$authorizationStatus
             .receive(on: DispatchQueue.main)
@@ -137,9 +146,14 @@ class RadarViewModel: ObservableObject {
 
         let radius = min(size.width, size.height) / 2 * radiusFactor * 0.85
 
-        // Calculate position (0 degrees = up, clockwise)
+        // Calculate base position (0 degrees = up, clockwise)
         let x = size.width / 2 + radius * sin(angleRadians)
-        let y = size.height / 2 - radius * cos(angleRadians)
+        var y = size.height / 2 - radius * cos(angleRadians)
+
+        // Apply pitch offset (tilt up/down moves icons vertically)
+        // Neutral pitch is ~π/2 when phone is held upright
+        let pitchOffset = (devicePitch - .pi / 2) * size.height * 0.5
+        y += pitchOffset
 
         return CGPoint(x: x, y: y)
     }
@@ -167,9 +181,14 @@ class RadarViewModel: ObservableObject {
 
         let radius = min(size.width, size.height) / 2 * radiusFactor * 0.9
 
-        // Calculate position (0 degrees = up, clockwise)
+        // Calculate base position (0 degrees = up, clockwise)
         let x = size.width / 2 + radius * sin(angleRadians)
-        let y = size.height / 2 - radius * cos(angleRadians)
+        var y = size.height / 2 - radius * cos(angleRadians)
+
+        // Apply pitch offset (tilt up/down moves icons vertically)
+        // Neutral pitch is ~π/2 when phone is held upright
+        let pitchOffset = (devicePitch - .pi / 2) * size.height * 0.5
+        y += pitchOffset
 
         return CGPoint(x: x, y: y)
     }
