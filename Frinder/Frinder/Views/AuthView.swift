@@ -89,6 +89,40 @@ struct AuthView: View {
                 .padding(.horizontal)
                 .disabled(!isFormValid || authViewModel.isLoading)
 
+                // Divider
+                HStack {
+                    Rectangle()
+                        .fill(Color.secondary.opacity(0.3))
+                        .frame(height: 1)
+                    Text("or")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Rectangle()
+                        .fill(Color.secondary.opacity(0.3))
+                        .frame(height: 1)
+                }
+                .padding(.horizontal)
+
+                // Google Sign-In button
+                Button {
+                    Task {
+                        await authViewModel.signInWithGoogle()
+                    }
+                } label: {
+                    HStack {
+                        Image(systemName: "g.circle.fill")
+                            .font(.title2)
+                        Text("Continue with Google")
+                    }
+                }
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(Color(.systemGray6))
+                .foregroundStyle(.primary)
+                .cornerRadius(10)
+                .padding(.horizontal)
+                .disabled(authViewModel.isLoading)
+
                 // Toggle sign in/up
                 Button {
                     withAnimation {

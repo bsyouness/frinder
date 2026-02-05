@@ -49,5 +49,18 @@
     </array>
     <key>UIStatusBarStyle</key>
     <string>UIStatusBarStyleLightContent</string>
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleTypeRole</key>
+            <string>Editor</string>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>com.googleusercontent.apps.866948090426-n2402flk1c9sst9tachlgr75eekeag3p</string>
+            </array>
+        </dict>
+    </array>
+    <key>GIDClientID</key>
+    <string>866948090426-n2402flk1c9sst9tachlgr75eekeag3p.apps.googleusercontent.com</string>
 </dict>
 </plist>

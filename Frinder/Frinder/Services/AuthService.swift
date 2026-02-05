@@ -1,6 +1,8 @@
 import Foundation
 import FirebaseAuth
 import FirebaseFirestore
+import FirebaseCore
+import GoogleSignIn
 
 class AuthService {
     static let shared = AuthService()
@@ -8,6 +10,10 @@ class AuthService {
     private let db = Firestore.firestore()
 
     private init() {}
+
+    var clientID: String? {
+        FirebaseApp.app()?.options.clientID
+    }
 
     var currentUserId: String? {
         auth.currentUser?.uid
@@ -32,7 +38,42 @@ class AuthService {
         return user
     }
 
+    func signInWithGoogle(presenting viewController: UIViewController) async throws -> User {
+        guard let clientID = clientID else {
+            throw AuthError.configurationError
+        }
+
+        let config = GIDConfiguration(clientID: clientID)
+        GIDSignIn.sharedInstance.configuration = config
+
+        let result = try await GIDSignIn.sharedInstance.signIn(withPresenting: viewController)
+
+        guard let idToken = result.user.idToken?.tokenString else {
+            throw AuthError.missingToken
+        }
+
+        let credential = GoogleAuthProvider.credential(
+            withIDToken: idToken,
+            accessToken: result.user.accessToken.tokenString
+        )
+
+        let authResult = try await auth.signIn(with: credential)
+
+        // Check if user exists in Firestore
+        if let existingUser = try await fetchUser(id: authResult.user.uid) {
+            return existingUser
+        }
+
+        // Create new user
+        let displayName = result.user.profile?.name ?? "User"
+        let email = result.user.profile?.email ?? ""
+        let user = User(id: authResult.user.uid, email: email, displayName: displayName)
+        try await saveUser(user)
+        return user
+    }
+
     func signOut() throws {
+        GIDSignIn.sharedInstance.signOut()
         try auth.signOut()
     }
 
@@ -79,6 +120,8 @@ class AuthService {
 enum AuthError: LocalizedError {
     case userNotFound
     case notAuthenticated
+    case configurationError
+    case missingToken
 
     var errorDescription: String? {
         switch self {
@@ -86,6 +129,10 @@ enum AuthError: LocalizedError {
             return "User not found"
         case .notAuthenticated:
             return "Not authenticated"
+        case .configurationError:
+            return "Google Sign-In configuration error"
+        case .missingToken:
+            return "Failed to get authentication token"
         }
     }
 }

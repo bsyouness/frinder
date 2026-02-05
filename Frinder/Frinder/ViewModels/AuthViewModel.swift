@@ -1,6 +1,7 @@
 import Foundation
 import FirebaseAuth
 import Combine
+import UIKit
 
 @MainActor
 class AuthViewModel: ObservableObject {
@@ -63,6 +64,28 @@ class AuthViewModel: ObservableObject {
                 email: email.lowercased().trimmingCharacters(in: .whitespaces),
                 password: password
             )
+            currentUser = user
+            isAuthenticated = true
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+
+        isLoading = false
+    }
+
+    func signInWithGoogle() async {
+        isLoading = true
+        errorMessage = nil
+
+        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let rootViewController = windowScene.windows.first?.rootViewController else {
+            errorMessage = "Unable to get root view controller"
+            isLoading = false
+            return
+        }
+
+        do {
+            let user = try await authService.signInWithGoogle(presenting: rootViewController)
             currentUser = user
             isAuthenticated = true
         } catch {
