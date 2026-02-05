@@ -96,10 +96,14 @@ class AuthViewModel: ObservableObject {
     }
 
     func signOut() {
+        // Stop Firestore listeners before signing out to prevent "client is offline" errors
+        FriendService.shared.stopListening()
+
         do {
             try authService.signOut()
             currentUser = nil
             isAuthenticated = false
+            errorMessage = nil
         } catch {
             errorMessage = error.localizedDescription
         }

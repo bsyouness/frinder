@@ -106,6 +106,11 @@ class FriendService: ObservableObject {
         // First listen to user's friend list changes
         friendsListener = db.collection("users").document(userId)
             .addSnapshotListener { [weak self] snapshot, error in
+                // Silently ignore errors (e.g., when signing out)
+                if error != nil {
+                    return
+                }
+
                 guard let self = self,
                       let data = snapshot?.data(),
                       let friendIds = data["friendIds"] as? [String],
@@ -125,6 +130,11 @@ class FriendService: ObservableObject {
         locationListener = db.collection("users")
             .whereField(FieldPath.documentID(), in: friendIds)
             .addSnapshotListener { [weak self] snapshot, error in
+                // Silently ignore errors (e.g., when signing out)
+                if error != nil {
+                    return
+                }
+
                 guard let self = self,
                       let documents = snapshot?.documents else { return }
 
@@ -157,6 +167,7 @@ class FriendService: ObservableObject {
         friendsListener?.remove()
         locationListener = nil
         friendsListener = nil
+        friends = []
     }
 
     func fetchPendingRequests(userId: String) async throws -> [User] {
