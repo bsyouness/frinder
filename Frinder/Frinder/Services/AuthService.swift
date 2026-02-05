@@ -77,6 +77,10 @@ class AuthService {
         try auth.signOut()
     }
 
+    func sendPasswordReset(email: String) async throws {
+        try await auth.sendPasswordReset(withEmail: email)
+    }
+
     func saveUser(_ user: User) async throws {
         let data = try Firestore.Encoder().encode(user)
         try await db.collection("users").document(user.id).setData(data)

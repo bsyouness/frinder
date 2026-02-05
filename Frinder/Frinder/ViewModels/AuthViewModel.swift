@@ -105,6 +105,21 @@ class AuthViewModel: ObservableObject {
         }
     }
 
+    func sendPasswordReset(email: String) async -> Bool {
+        isLoading = true
+        errorMessage = nil
+
+        do {
+            try await authService.sendPasswordReset(email: email.lowercased().trimmingCharacters(in: .whitespaces))
+            isLoading = false
+            return true
+        } catch {
+            errorMessage = error.localizedDescription
+            isLoading = false
+            return false
+        }
+    }
+
     private func fetchCurrentUser() async {
         do {
             currentUser = try await authService.fetchCurrentUser()

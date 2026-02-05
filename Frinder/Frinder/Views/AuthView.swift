@@ -6,6 +6,7 @@ struct AuthView: View {
     @State private var email = ""
     @State private var password = ""
     @State private var displayName = ""
+    @State private var showResetAlert = false
 
     var body: some View {
         NavigationStack {
@@ -48,6 +49,21 @@ struct AuthView: View {
                     SecureField("Password", text: $password)
                         .textFieldStyle(.roundedBorder)
                         .textContentType(isSignUp ? .newPassword : .password)
+
+                    if !isSignUp {
+                        HStack {
+                            Spacer()
+                            Button("Forgot Password?") {
+                                Task {
+                                    if await authViewModel.sendPasswordReset(email: email) {
+                                        showResetAlert = true
+                                    }
+                                }
+                            }
+                            .font(.caption)
+                            .disabled(email.isEmpty || authViewModel.isLoading)
+                        }
+                    }
                 }
                 .padding(.horizontal)
 
@@ -137,6 +153,11 @@ struct AuthView: View {
                 Spacer()
             }
             .padding()
+            .alert("Password Reset Email Sent", isPresented: $showResetAlert) {
+                Button("OK", role: .cancel) { }
+            } message: {
+                Text("Check your email for instructions to reset your password.")
+            }
         }
     }
 
