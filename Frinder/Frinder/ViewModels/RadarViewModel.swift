@@ -241,9 +241,13 @@ class RadarViewModel: ObservableObject {
 
 /// Represents a cluster of landmarks at a position
 struct LandmarkCluster: Identifiable {
-    let id = UUID()
     let landmarks: [Landmark]
     let position: CGPoint
+
+    /// Stable ID based on landmark IDs so SwiftUI preserves state across updates
+    var id: String {
+        landmarks.map { $0.id }.sorted().joined(separator: "-")
+    }
 
     var isSingle: Bool { landmarks.count == 1 }
     var first: Landmark? { landmarks.first }
