@@ -21,9 +21,9 @@ struct RadarView: View {
                         LocationDeniedView()
                     }
                 } else {
-                    // Landmark dots (shown behind friends)
+                    // Landmark dots (shown behind friends) - only visible ones
                     if radarViewModel.showLandmarks {
-                        ForEach(radarViewModel.landmarks) { landmark in
+                        ForEach(radarViewModel.visibleLandmarks) { landmark in
                             LandmarkDotView(
                                 landmark: landmark,
                                 distance: radarViewModel.landmarkDistance(for: landmark),
@@ -32,8 +32,8 @@ struct RadarView: View {
                         }
                     }
 
-                    // Friend dots
-                    ForEach(radarViewModel.friends) { friend in
+                    // Friend dots - only visible ones
+                    ForEach(radarViewModel.visibleFriends) { friend in
                         FriendDotView(
                             friend: friend,
                             userLocation: radarViewModel.currentLocation,

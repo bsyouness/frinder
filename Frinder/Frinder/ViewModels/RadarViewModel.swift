@@ -13,6 +13,36 @@ class RadarViewModel: ObservableObject {
     let landmarks = Landmark.allLandmarks
     var showLandmarks: Bool { AppSettings.shared.showLandmarks }
 
+    /// Field of view in degrees (total angle visible on screen)
+    private let fieldOfView: Double = 90.0
+
+    /// Get landmarks that are within the current field of view
+    var visibleLandmarks: [Landmark] {
+        guard let userLocation = currentLocation else { return [] }
+        return landmarks.filter { landmark in
+            isWithinFieldOfView(bearing: landmark.bearing(from: userLocation.coordinate))
+        }
+    }
+
+    /// Get friends that are within the current field of view
+    var visibleFriends: [Friend] {
+        guard let userLocation = currentLocation else { return [] }
+        return friends.filter { friend in
+            guard let bearing = friend.bearing(from: userLocation) else { return false }
+            return isWithinFieldOfView(bearing: bearing)
+        }
+    }
+
+    /// Check if a bearing is within the current field of view
+    private func isWithinFieldOfView(bearing: Double) -> Bool {
+        let halfFOV = fieldOfView / 2.0
+        var relativeAngle = bearing - deviceHeading
+        // Normalize to -180 to 180
+        while relativeAngle > 180 { relativeAngle -= 360 }
+        while relativeAngle < -180 { relativeAngle += 360 }
+        return abs(relativeAngle) <= halfFOV
+    }
+
     private let locationService = LocationService.shared
     private let motionService = MotionService.shared
     private let friendService = FriendService.shared
