@@ -21,14 +21,22 @@ struct RadarView: View {
                         LocationDeniedView()
                     }
                 } else {
-                    // Landmark dots (shown behind friends) - only visible ones
+                    // Landmark dots (shown behind friends) - clustered when overlapping
                     if radarViewModel.showLandmarks {
-                        ForEach(radarViewModel.visibleLandmarks) { landmark in
-                            LandmarkDotView(
-                                landmark: landmark,
-                                distance: radarViewModel.landmarkDistance(for: landmark),
-                                position: radarViewModel.landmarkPosition(for: landmark, in: geometry.size)
-                            )
+                        let clusters = radarViewModel.clusterLandmarks(in: geometry.size)
+                        ForEach(clusters) { cluster in
+                            if cluster.isSingle, let landmark = cluster.first {
+                                LandmarkDotView(
+                                    landmark: landmark,
+                                    distance: radarViewModel.landmarkDistance(for: landmark),
+                                    position: cluster.position
+                                )
+                            } else {
+                                LandmarkClusterView(
+                                    cluster: cluster,
+                                    getDistance: { radarViewModel.landmarkDistance(for: $0) }
+                                )
+                            }
                         }
                     }
 
@@ -156,6 +164,73 @@ struct LandmarkDotView: View {
         .position(position)
         .animation(.easeOut(duration: 0.1), value: position.x)
         .animation(.easeOut(duration: 0.1), value: position.y)
+    }
+}
+
+struct LandmarkClusterView: View {
+    let cluster: LandmarkCluster
+    let getDistance: (Landmark) -> String?
+    @State private var isExpanded = false
+
+    var body: some View {
+        VStack(spacing: 2) {
+            if isExpanded {
+                // Expanded list of landmarks
+                VStack(alignment: .leading, spacing: 4) {
+                    ForEach(cluster.landmarks) { landmark in
+                        HStack(spacing: 6) {
+                            Text(landmark.icon)
+                                .font(.system(size: 16))
+                            VStack(alignment: .leading, spacing: 1) {
+                                Text(landmark.name)
+                                    .font(.system(size: 9, weight: .medium))
+                                    .foregroundStyle(.white.opacity(0.9))
+                                    .lineLimit(1)
+                                if let distance = getDistance(landmark) {
+                                    Text(distance)
+                                        .font(.system(size: 8))
+                                        .foregroundStyle(.white.opacity(0.6))
+                                }
+                            }
+                            Spacer()
+                        }
+                    }
+                }
+                .padding(8)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(.black.opacity(0.8))
+                )
+                .frame(width: 140)
+            } else {
+                // Collapsed cluster icon
+                ZStack {
+                    Image(systemName: "list.bullet")
+                        .font(.system(size: 20))
+                        .foregroundStyle(.white)
+
+                    Text("\(cluster.landmarks.count)")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundStyle(.white)
+                        .padding(4)
+                        .background(Circle().fill(.blue))
+                        .offset(x: 12, y: -12)
+                }
+                .padding(8)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(.black.opacity(0.6))
+                )
+            }
+        }
+        .onTapGesture {
+            withAnimation(.easeInOut(duration: 0.2)) {
+                isExpanded.toggle()
+            }
+        }
+        .position(cluster.position)
+        .animation(.easeOut(duration: 0.1), value: cluster.position.x)
+        .animation(.easeOut(duration: 0.1), value: cluster.position.y)
     }
 }
 

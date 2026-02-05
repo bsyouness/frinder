@@ -180,4 +180,53 @@ class RadarViewModel: ObservableObject {
         let distance = landmark.distance(from: userLocation.coordinate)
         return AppSettings.shared.distanceUnit.format(meters: distance)
     }
+
+    /// Cluster overlapping landmarks based on screen positions
+    func clusterLandmarks(in size: CGSize, threshold: CGFloat = 60) -> [LandmarkCluster] {
+        let visible = visibleLandmarks
+        guard !visible.isEmpty else { return [] }
+
+        var clusters: [LandmarkCluster] = []
+        var assigned = Set<String>()
+
+        for landmark in visible {
+            if assigned.contains(landmark.id) { continue }
+
+            let position = landmarkPosition(for: landmark, in: size)
+            var clusterLandmarks = [landmark]
+            assigned.insert(landmark.id)
+
+            // Find other landmarks that overlap with this one
+            for other in visible {
+                if assigned.contains(other.id) { continue }
+                let otherPosition = landmarkPosition(for: other, in: size)
+                let distance = hypot(position.x - otherPosition.x, position.y - otherPosition.y)
+                if distance < threshold {
+                    clusterLandmarks.append(other)
+                    assigned.insert(other.id)
+                }
+            }
+
+            // Sort landmarks in cluster by distance
+            if let userLocation = currentLocation {
+                clusterLandmarks.sort { l1, l2 in
+                    l1.distance(from: userLocation.coordinate) < l2.distance(from: userLocation.coordinate)
+                }
+            }
+
+            clusters.append(LandmarkCluster(landmarks: clusterLandmarks, position: position))
+        }
+
+        return clusters
+    }
+}
+
+/// Represents a cluster of landmarks at a position
+struct LandmarkCluster: Identifiable {
+    let id = UUID()
+    let landmarks: [Landmark]
+    let position: CGPoint
+
+    var isSingle: Bool { landmarks.count == 1 }
+    var first: Landmark? { landmarks.first }
 }
