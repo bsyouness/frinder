@@ -55,13 +55,14 @@ struct AuthView: View {
                             Spacer()
                             Button("Forgot Password?") {
                                 Task {
-                                    if await authViewModel.sendPasswordReset(email: email) {
+                                    let success = await authViewModel.sendPasswordReset(email: email)
+                                    if success {
                                         showResetAlert = true
                                     }
                                 }
                             }
                             .font(.caption)
-                            .disabled(email.isEmpty || authViewModel.isLoading)
+                            .disabled(!isValidEmail(email) || authViewModel.isLoading)
                         }
                     }
                 }
@@ -158,10 +159,10 @@ struct AuthView: View {
                 Spacer()
             }
             .padding()
-            .alert("Password Reset Email Sent", isPresented: $showResetAlert) {
+            .alert("Check Your Email", isPresented: $showResetAlert) {
                 Button("OK", role: .cancel) { }
             } message: {
-                Text("Check your email for instructions to reset your password.")
+                Text("If an account exists for \(email), you'll receive a password reset link. Check your spam folder if you don't see it.")
             }
         }
     }
@@ -172,6 +173,11 @@ struct AuthView: View {
         } else {
             return !email.isEmpty && !password.isEmpty
         }
+    }
+
+    private func isValidEmail(_ email: String) -> Bool {
+        let emailRegex = #"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$"#
+        return email.range(of: emailRegex, options: .regularExpression) != nil
     }
 }
 

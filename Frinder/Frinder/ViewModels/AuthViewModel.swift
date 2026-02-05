@@ -113,11 +113,15 @@ class AuthViewModel: ObservableObject {
         isLoading = true
         errorMessage = nil
 
+        let trimmedEmail = email.lowercased().trimmingCharacters(in: .whitespaces)
+
         do {
-            try await authService.sendPasswordReset(email: email.lowercased().trimmingCharacters(in: .whitespaces))
+            try await authService.sendPasswordReset(email: trimmedEmail)
+            print("Password reset email sent successfully to: \(trimmedEmail)")
             isLoading = false
             return true
         } catch {
+            print("Password reset error: \(error)")
             errorMessage = error.localizedDescription
             isLoading = false
             return false
