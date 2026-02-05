@@ -34,7 +34,8 @@ struct RadarView: View {
                             } else {
                                 LandmarkClusterView(
                                     cluster: cluster,
-                                    getDistance: { radarViewModel.landmarkDistance(for: $0) }
+                                    getDistance: { radarViewModel.landmarkDistance(for: $0) },
+                                    screenSize: geometry.size
                                 )
                             }
                         }
@@ -170,11 +171,21 @@ struct LandmarkDotView: View {
 struct LandmarkClusterView: View {
     let cluster: LandmarkCluster
     let getDistance: (Landmark) -> String?
+    let screenSize: CGSize
     @State private var isExpanded = false
+    @State private var wasOffScreen = false
+
+    private var isOffScreen: Bool {
+        let margin: CGFloat = 50
+        return cluster.position.x < -margin ||
+               cluster.position.x > screenSize.width + margin ||
+               cluster.position.y < -margin ||
+               cluster.position.y > screenSize.height + margin
+    }
 
     var body: some View {
         VStack(spacing: 2) {
-            if isExpanded {
+            if isExpanded && !isOffScreen {
                 // Expanded list of landmarks
                 VStack(alignment: .leading, spacing: 4) {
                     ForEach(cluster.landmarks) { landmark in
@@ -224,8 +235,17 @@ struct LandmarkClusterView: View {
             }
         }
         .onTapGesture {
-            withAnimation(.easeInOut(duration: 0.2)) {
-                isExpanded.toggle()
+            if !isOffScreen {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    isExpanded = true
+                }
+            }
+        }
+        .onChange(of: isOffScreen) { _, offScreen in
+            if offScreen {
+                // Collapse when going off screen
+                isExpanded = false
+                wasOffScreen = true
             }
         }
         .position(cluster.position)
