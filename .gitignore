@@ -27,9 +27,8 @@ Podfile.lock
 # Carthage
 Carthage/Build/
 
-# Firebase
-# Keep the placeholder but ignore the real one if named differently
-# GoogleService-Info.plist
+# Firebase - contains API keys, do not commit
+GoogleService-Info.plist
 
 # OS generated files
 .DS_Store
