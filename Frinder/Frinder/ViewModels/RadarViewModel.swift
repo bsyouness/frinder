@@ -14,8 +14,10 @@ class RadarViewModel: ObservableObject {
     let landmarks = Landmark.allLandmarks
     var showLandmarks: Bool { AppSettings.shared.showLandmarks }
 
-    /// Field of view in degrees (total angle visible on screen)
-    private let fieldOfView: Double = 90.0
+    /// Horizontal field of view in degrees (total angle visible on screen width)
+    private let horizontalFOV: Double = 60.0
+    /// Vertical field of view in degrees (total angle visible on screen height)
+    private let verticalFOV: Double = 90.0
 
     /// Get landmarks that are within the current field of view
     var visibleLandmarks: [Landmark] {
@@ -34,14 +36,27 @@ class RadarViewModel: ObservableObject {
         }
     }
 
-    /// Check if a bearing is within the current field of view
+    /// Check if a bearing is within the current horizontal field of view
     private func isWithinFieldOfView(bearing: Double) -> Bool {
-        let halfFOV = fieldOfView / 2.0
-        var relativeAngle = bearing - deviceHeading
-        // Normalize to -180 to 180
-        while relativeAngle > 180 { relativeAngle -= 360 }
-        while relativeAngle < -180 { relativeAngle += 360 }
+        let halfFOV = horizontalFOV / 2.0
+        let relativeAngle = normalizeAngle(bearing - deviceHeading)
         return abs(relativeAngle) <= halfFOV
+    }
+
+    /// Check if item is within vertical field of view based on pitch
+    private func isWithinVerticalFOV() -> Bool {
+        let halfFOV = verticalFOV / 2.0 * .pi / 180.0
+        let neutralPitch = Double.pi / 2.0 // Phone held upright
+        let pitchDelta = devicePitch - neutralPitch
+        return abs(pitchDelta) <= halfFOV
+    }
+
+    /// Normalize angle to -180 to 180 range
+    private func normalizeAngle(_ angle: Double) -> Double {
+        var normalized = angle
+        while normalized > 180 { normalized -= 360 }
+        while normalized < -180 { normalized += 360 }
+        return normalized
     }
 
     private let locationService = LocationService.shared
@@ -125,41 +140,33 @@ class RadarViewModel: ObservableObject {
     }
 
     /// Calculate the position of a friend on the radar view
-    /// Returns (x, y) as percentages from center (-1 to 1)
+    /// Maps horizontal angle to X position and pitch to Y position across full screen
     func friendPosition(for friend: Friend, in size: CGSize) -> CGPoint {
         guard let userLocation = currentLocation,
               let bearing = friend.bearing(from: userLocation) else {
             return .zero
         }
 
-        // Calculate angle relative to device heading
-        let relativeAngle = (bearing - deviceHeading + 360).truncatingRemainder(dividingBy: 360)
-        let angleRadians = relativeAngle * .pi / 180
+        // Calculate horizontal position based on relative bearing
+        let relativeAngle = normalizeAngle(bearing - deviceHeading)
+        let halfHFOV = horizontalFOV / 2.0
+        // Map angle linearly: -halfFOV -> 0, 0 -> center, +halfFOV -> width
+        let normalizedX = (relativeAngle + halfHFOV) / horizontalFOV
+        let x = normalizedX * size.width
 
-        // Calculate distance factor (closer friends are more centered)
-        let distance = friend.distance(from: userLocation) ?? 0
-        let maxDistance: Double = 50000 // 50km max
-        let normalizedDistance = min(distance / maxDistance, 1.0)
-
-        // Use logarithmic scale for better distribution
-        let radiusFactor = 0.2 + (log10(normalizedDistance * 9 + 1) * 0.8)
-
-        let radius = min(size.width, size.height) / 2 * radiusFactor * 0.85
-
-        // Calculate base position (0 degrees = up, clockwise)
-        let x = size.width / 2 + radius * sin(angleRadians)
-        var y = size.height / 2 - radius * cos(angleRadians)
-
-        // Apply pitch offset (tilt up/down moves icons vertically)
-        // Neutral pitch is ~π/2 when phone is held upright
-        let pitchOffset = (devicePitch - .pi / 2) * size.height * 0.5
-        y += pitchOffset
+        // Calculate vertical position based on pitch
+        let neutralPitch = Double.pi / 2.0
+        let pitchDelta = devicePitch - neutralPitch
+        let halfVFOV = verticalFOV / 2.0 * .pi / 180.0
+        // Map pitch: looking up (+pitch) -> top of screen, looking down (-pitch) -> bottom
+        let normalizedY = 0.5 - (pitchDelta / (2.0 * halfVFOV))
+        let y = normalizedY * size.height
 
         return CGPoint(x: x, y: y)
     }
 
     /// Calculate the position of a landmark on the radar view
-    /// Returns (x, y) as percentages from center (-1 to 1)
+    /// Maps horizontal angle to X position and pitch to Y position across full screen
     func landmarkPosition(for landmark: Landmark, in size: CGSize) -> CGPoint {
         guard let userLocation = currentLocation else {
             return .zero
@@ -167,28 +174,20 @@ class RadarViewModel: ObservableObject {
 
         let bearing = landmark.bearing(from: userLocation.coordinate)
 
-        // Calculate angle relative to device heading
-        let relativeAngle = (bearing - deviceHeading + 360).truncatingRemainder(dividingBy: 360)
-        let angleRadians = relativeAngle * .pi / 180
+        // Calculate horizontal position based on relative bearing
+        let relativeAngle = normalizeAngle(bearing - deviceHeading)
+        let halfHFOV = horizontalFOV / 2.0
+        // Map angle linearly: -halfFOV -> 0, 0 -> center, +halfFOV -> width
+        let normalizedX = (relativeAngle + halfHFOV) / horizontalFOV
+        let x = normalizedX * size.width
 
-        // Calculate distance factor (closer landmarks are more centered)
-        let distance = landmark.distance(from: userLocation.coordinate)
-        let maxDistance: Double = 20000000 // 20,000km max (half earth circumference)
-        let normalizedDistance = min(distance / maxDistance, 1.0)
-
-        // Use logarithmic scale for better distribution
-        let radiusFactor = 0.15 + (log10(normalizedDistance * 99 + 1) * 0.425)
-
-        let radius = min(size.width, size.height) / 2 * radiusFactor * 0.9
-
-        // Calculate base position (0 degrees = up, clockwise)
-        let x = size.width / 2 + radius * sin(angleRadians)
-        var y = size.height / 2 - radius * cos(angleRadians)
-
-        // Apply pitch offset (tilt up/down moves icons vertically)
-        // Neutral pitch is ~π/2 when phone is held upright
-        let pitchOffset = (devicePitch - .pi / 2) * size.height * 0.5
-        y += pitchOffset
+        // Calculate vertical position based on pitch
+        let neutralPitch = Double.pi / 2.0
+        let pitchDelta = devicePitch - neutralPitch
+        let halfVFOV = verticalFOV / 2.0 * .pi / 180.0
+        // Map pitch: looking up (+pitch) -> top of screen, looking down (-pitch) -> bottom
+        let normalizedY = 0.5 - (pitchDelta / (2.0 * halfVFOV))
+        let y = normalizedY * size.height
 
         return CGPoint(x: x, y: y)
     }
