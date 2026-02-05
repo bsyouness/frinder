@@ -15,20 +15,9 @@ struct Landmark: Identifiable {
     }
 
     /// Calculate bearing from user location to this landmark
+    /// - Returns: Bearing in degrees (0-360)
     func bearing(from location: CLLocationCoordinate2D) -> Double {
-        let lat1 = location.latitude.toRadians()
-        let lon1 = location.longitude.toRadians()
-        let lat2 = coordinate.latitude.toRadians()
-        let lon2 = coordinate.longitude.toRadians()
-
-        let dLon = lon2 - lon1
-        let y = sin(dLon) * cos(lat2)
-        let x = cos(lat1) * sin(lat2) - sin(lat1) * cos(lat2) * cos(dLon)
-
-        var bearing = atan2(y, x).toDegrees()
-        bearing = (bearing + 360).truncatingRemainder(dividingBy: 360)
-
-        return bearing
+        return GeoMath.bearing(from: location, to: coordinate)
     }
 }
 
