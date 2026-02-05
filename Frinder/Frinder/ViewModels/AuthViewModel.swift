@@ -11,6 +11,11 @@ class AuthViewModel: ObservableObject {
     @Published var errorMessage: String?
 
     private let authService = AuthService.shared
+
+    /// Get the current user ID from Firebase Auth (works even when offline)
+    var currentUserId: String? {
+        authService.currentUserId
+    }
     private var authStateHandle: AuthStateDidChangeListenerHandle?
 
     init() {

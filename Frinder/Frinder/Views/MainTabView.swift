@@ -25,7 +25,8 @@ struct MainTabView: View {
                 }
         }
         .onAppear {
-            if let userId = authViewModel.currentUser?.id {
+            // Use Firebase Auth user ID directly (works even when Firestore is offline)
+            if let userId = authViewModel.currentUserId {
                 radarViewModel.startTracking(userId: userId)
                 friendsViewModel.setup(userId: userId)
             }
