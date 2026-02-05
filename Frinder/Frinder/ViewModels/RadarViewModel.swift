@@ -158,8 +158,8 @@ class RadarViewModel: ObservableObject {
         let neutralPitch = Double.pi / 2.0
         let pitchDelta = devicePitch - neutralPitch
         let halfVFOV = verticalFOV / 2.0 * .pi / 180.0
-        // Map pitch: looking up (+pitch) -> top of screen, looking down (-pitch) -> bottom
-        let normalizedY = 0.5 - (pitchDelta / (2.0 * halfVFOV))
+        // Map pitch: tilt down -> icons move up, tilt up -> icons move down
+        let normalizedY = 0.5 + (pitchDelta / (2.0 * halfVFOV))
         let y = normalizedY * size.height
 
         return CGPoint(x: x, y: y)
@@ -185,8 +185,8 @@ class RadarViewModel: ObservableObject {
         let neutralPitch = Double.pi / 2.0
         let pitchDelta = devicePitch - neutralPitch
         let halfVFOV = verticalFOV / 2.0 * .pi / 180.0
-        // Map pitch: looking up (+pitch) -> top of screen, looking down (-pitch) -> bottom
-        let normalizedY = 0.5 - (pitchDelta / (2.0 * halfVFOV))
+        // Map pitch: tilt down -> icons move up, tilt up -> icons move down
+        let normalizedY = 0.5 + (pitchDelta / (2.0 * halfVFOV))
         let y = normalizedY * size.height
 
         return CGPoint(x: x, y: y)
