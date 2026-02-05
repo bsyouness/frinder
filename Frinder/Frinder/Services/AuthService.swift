@@ -24,18 +24,45 @@ class AuthService {
     }
 
     func signUp(email: String, password: String, displayName: String) async throws -> User {
-        let result = try await auth.createUser(withEmail: email, password: password)
-        let user = User(id: result.user.uid, email: email, displayName: displayName)
-        try await saveUser(user)
-        return user
+        do {
+            let result = try await auth.createUser(withEmail: email, password: password)
+            let user = User(id: result.user.uid, email: email, displayName: displayName)
+            try await saveUser(user)
+            return user
+        } catch let error as NSError {
+            // Check if email already exists with different provider
+            if error.code == AuthErrorCode.emailAlreadyInUse.rawValue {
+                let providers = try? await auth.fetchSignInMethods(forEmail: email)
+                if let providers = providers, !providers.isEmpty, !providers.contains("password") {
+                    throw AuthError.differentProvider(providers: providers)
+                }
+            }
+            throw error
+        }
     }
 
     func signIn(email: String, password: String) async throws -> User {
-        let result = try await auth.signIn(withEmail: email, password: password)
-        guard let user = try await fetchUser(id: result.user.uid) else {
-            throw AuthError.userNotFound
+        do {
+            let result = try await auth.signIn(withEmail: email, password: password)
+
+            // Try to fetch existing user, create if missing (e.g., if Firestore was reset)
+            if let user = try await fetchUser(id: result.user.uid) {
+                return user
+            }
+
+            // User exists in Auth but not Firestore - recreate document
+            let displayName = result.user.displayName ?? email.components(separatedBy: "@").first ?? "User"
+            let user = User(id: result.user.uid, email: email, displayName: displayName)
+            try await saveUser(user)
+            return user
+        } catch {
+            // Check if this email is registered with a different provider
+            let providers = try? await auth.fetchSignInMethods(forEmail: email)
+            if let providers = providers, !providers.isEmpty, !providers.contains("password") {
+                throw AuthError.differentProvider(providers: providers)
+            }
+            throw error
         }
-        return user
     }
 
     func signInWithGoogle(presenting viewController: UIViewController) async throws -> User {
@@ -126,6 +153,7 @@ enum AuthError: LocalizedError {
     case notAuthenticated
     case configurationError
     case missingToken
+    case differentProvider(providers: [String])
 
     var errorDescription: String? {
         switch self {
@@ -137,6 +165,24 @@ enum AuthError: LocalizedError {
             return "Google Sign-In configuration error"
         case .missingToken:
             return "Failed to get authentication token"
+        case .differentProvider(let providers):
+            let method = providers.first.map { providerDisplayName($0) } ?? "another method"
+            return "This email is registered with \(method). Please sign in using that method instead."
+        }
+    }
+
+    private func providerDisplayName(_ provider: String) -> String {
+        switch provider {
+        case "google.com":
+            return "Google"
+        case "apple.com":
+            return "Apple"
+        case "facebook.com":
+            return "Facebook"
+        case "password":
+            return "email and password"
+        default:
+            return provider
         }
     }
 }
