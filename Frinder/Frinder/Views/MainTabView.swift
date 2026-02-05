@@ -6,33 +6,64 @@ struct MainTabView: View {
     @StateObject private var friendsViewModel = FriendsViewModel()
 
     var body: some View {
-        TabView {
-            RadarView()
-                .environmentObject(radarViewModel)
-                .tabItem {
-                    Label("Radar", systemImage: "dot.radiowaves.left.and.right")
-                }
+        ZStack(alignment: .top) {
+            TabView {
+                RadarView()
+                    .environmentObject(radarViewModel)
+                    .tabItem {
+                        Label("Radar", systemImage: "dot.radiowaves.left.and.right")
+                    }
 
-            FriendsView()
-                .environmentObject(friendsViewModel)
-                .tabItem {
-                    Label("Friends", systemImage: "person.2")
-                }
+                FriendsView()
+                    .environmentObject(friendsViewModel)
+                    .tabItem {
+                        Label("Friends", systemImage: "person.2")
+                    }
 
-            SettingsView()
-                .tabItem {
-                    Label("Settings", systemImage: "gear")
-                }
-        }
-        .onAppear {
-            // Use Firebase Auth user ID directly (works even when Firestore is offline)
-            if let userId = authViewModel.currentUserId {
-                radarViewModel.startTracking(userId: userId)
-                friendsViewModel.setup(userId: userId)
+                SettingsView()
+                    .tabItem {
+                        Label("Settings", systemImage: "gear")
+                    }
             }
-        }
-        .onDisappear {
-            radarViewModel.stopTracking()
+            .onAppear {
+                // Use Firebase Auth user ID directly (works even when Firestore is offline)
+                if let userId = authViewModel.currentUserId {
+                    radarViewModel.startTracking(userId: userId)
+                    friendsViewModel.setup(userId: userId)
+                }
+            }
+            .onDisappear {
+                radarViewModel.stopTracking()
+            }
+
+            // Error banner
+            if let error = authViewModel.errorMessage {
+                VStack {
+                    HStack {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundStyle(.yellow)
+                        Text(error)
+                            .font(.caption)
+                            .foregroundStyle(.white)
+                        Spacer()
+                        Button {
+                            authViewModel.errorMessage = nil
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundStyle(.white.opacity(0.7))
+                        }
+                    }
+                    .padding(12)
+                    .background(Color.red.opacity(0.9))
+                    .cornerRadius(8)
+                    .padding(.horizontal)
+                    .padding(.top, 50)
+
+                    Spacer()
+                }
+                .transition(.move(edge: .top).combined(with: .opacity))
+                .animation(.easeInOut, value: authViewModel.errorMessage)
+            }
         }
     }
 }

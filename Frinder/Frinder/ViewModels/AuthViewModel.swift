@@ -138,6 +138,7 @@ class AuthViewModel: ObservableObject {
             currentUser = try await authService.fetchCurrentUser()
         } catch {
             print("Error fetching user: \(error)")
+            errorMessage = "Unable to load profile: \(error.localizedDescription)"
         }
     }
 }
