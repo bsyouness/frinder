@@ -110,8 +110,8 @@ struct AuthView: View {
                     }
                 } label: {
                     HStack {
-                        Image(systemName: "g.circle.fill")
-                            .font(.title2)
+                        GoogleLogo()
+                            .frame(width: 20, height: 20)
                         Text("Continue with Google")
                     }
                 }
@@ -145,6 +145,66 @@ struct AuthView: View {
             return !email.isEmpty && !password.isEmpty && !displayName.isEmpty && password.count >= 6
         } else {
             return !email.isEmpty && !password.isEmpty
+        }
+    }
+}
+
+struct GoogleLogo: View {
+    var body: some View {
+        Canvas { context, size in
+            let width = size.width
+            let height = size.height
+            let center = CGPoint(x: width / 2, y: height / 2)
+            let radius = min(width, height) / 2 * 0.9
+            let innerRadius = radius * 0.55
+            let barWidth = radius * 0.45
+
+            // Blue section (top-right, from ~45° to ~135° visually, but we draw from right)
+            var bluePath = Path()
+            bluePath.move(to: center)
+            bluePath.addArc(center: center, radius: radius, startAngle: .degrees(-45), endAngle: .degrees(45), clockwise: false)
+            bluePath.closeSubpath()
+            context.fill(bluePath, with: .color(Color(red: 66/255, green: 133/255, blue: 244/255)))
+
+            // Green section (bottom-right)
+            var greenPath = Path()
+            greenPath.move(to: center)
+            greenPath.addArc(center: center, radius: radius, startAngle: .degrees(45), endAngle: .degrees(135), clockwise: false)
+            greenPath.closeSubpath()
+            context.fill(greenPath, with: .color(Color(red: 52/255, green: 168/255, blue: 83/255)))
+
+            // Yellow section (bottom-left)
+            var yellowPath = Path()
+            yellowPath.move(to: center)
+            yellowPath.addArc(center: center, radius: radius, startAngle: .degrees(135), endAngle: .degrees(225), clockwise: false)
+            yellowPath.closeSubpath()
+            context.fill(yellowPath, with: .color(Color(red: 251/255, green: 188/255, blue: 5/255)))
+
+            // Red section (top-left)
+            var redPath = Path()
+            redPath.move(to: center)
+            redPath.addArc(center: center, radius: radius, startAngle: .degrees(225), endAngle: .degrees(315), clockwise: false)
+            redPath.closeSubpath()
+            context.fill(redPath, with: .color(Color(red: 234/255, green: 67/255, blue: 53/255)))
+
+            // White inner circle to create the "G" shape
+            var innerCircle = Path()
+            innerCircle.addArc(center: center, radius: innerRadius, startAngle: .degrees(0), endAngle: .degrees(360), clockwise: false)
+            context.fill(innerCircle, with: .color(.white))
+
+            // Cut out the right side to make the "G" opening
+            var cutout = Path()
+            cutout.addRect(CGRect(x: center.x, y: center.y - innerRadius, width: radius, height: innerRadius))
+            context.fill(cutout, with: .color(.white))
+
+            // Blue horizontal bar for the "G"
+            let barRect = CGRect(
+                x: center.x - barWidth * 0.1,
+                y: center.y - barWidth / 2,
+                width: radius * 0.55,
+                height: barWidth
+            )
+            context.fill(Path(barRect), with: .color(Color(red: 66/255, green: 133/255, blue: 244/255)))
         }
     }
 }
