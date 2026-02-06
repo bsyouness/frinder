@@ -105,6 +105,11 @@ class AuthViewModel: ObservableObject {
         // Stop Firestore listeners before signing out to prevent "client is offline" errors
         FriendService.shared.stopListening()
 
+        // Remove FCM token before signing out
+        Task {
+            await NotificationService.shared.removeToken()
+        }
+
         do {
             try authService.signOut()
             currentUser = nil

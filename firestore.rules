@@ -3,20 +3,39 @@ service cloud.firestore {
   match /databases/{database}/documents {
     // Users collection
     match /users/{userId} {
-      // Users can read their own data
-      allow read: if request.auth != null && request.auth.uid == userId;
-
-      // Users can write their own data
-      allow write: if request.auth != null && request.auth.uid == userId;
-
-      // Allow authenticated users to search for other users (for friend requests)
-      // This is necessary for the friend search functionality
+      // Allow authenticated users to read any user (for friend search and location sharing)
       allow read: if request.auth != null;
 
-      // Allow friends to read each other's location
-      allow read: if request.auth != null &&
-        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-        request.auth.uid in resource.data.friendIds;
+      // Users can create and fully write their own document
+      allow create, delete: if request.auth != null && request.auth.uid == userId;
+      allow update: if request.auth != null && request.auth.uid == userId;
+
+      // Allow another user to update ONLY friend-related fields
+      // This enables: sending friend requests, accepting/declining, removing friends
+      allow update: if request.auth != null &&
+        request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['friendRequestsReceived', 'friendRequestsSent', 'friendIds']);
     }
+
+    // Pending invites collection (for inviting non-existent users)
+    match /pendingInvites/{inviteId} {
+      // Users can create invites where they are the inviter
+      allow create: if request.auth != null &&
+        request.resource.data.inviterUserId == request.auth.uid;
+
+      // Users can read invites they created
+      allow read: if request.auth != null &&
+        resource.data.inviterUserId == request.auth.uid;
+
+      // No client-side updates or deletes - handled by Cloud Functions
+      allow update, delete: if false;
+    }
+
+    // Device tokens collection (for push notifications)
+    match /deviceTokens/{userId} {
+      // Users can only read/write their own device tokens
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
   }
 }

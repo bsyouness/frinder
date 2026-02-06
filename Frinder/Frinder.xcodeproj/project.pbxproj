@@ -27,10 +27,14 @@
 		000000000000000000000018 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000018 /* SettingsView.swift */; };
 		000000000000000000000019 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 200000000000000000000001 /* FirebaseAuth */; };
 		000000000000000000000020 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 200000000000000000000002 /* FirebaseFirestore */; };
-		000000000000000000000023 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = 200000000000000000000003 /* GoogleSignIn */; };
-		000000000000000000000024 /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 200000000000000000000004 /* GoogleSignInSwift */; };
 		000000000000000000000021 /* Landmark.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000020 /* Landmark.swift */; };
 		000000000000000000000022 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000021 /* GoogleService-Info.plist */; };
+		000000000000000000000023 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = 200000000000000000000003 /* GoogleSignIn */; };
+		000000000000000000000024 /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 200000000000000000000004 /* GoogleSignInSwift */; };
+		000000000000000000000025 /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000022 /* NotificationService.swift */; };
+		000000000000000000000026 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000023 /* AppDelegate.swift */; };
+		000000000000000000000027 /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = 200000000000000000000005 /* FirebaseMessaging */; };
+		EF233E7F2F356929009EB732 /* GeoMath.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF233E7D2F356929009EB732 /* GeoMath.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -56,6 +60,10 @@
 		100000000000000000000019 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		100000000000000000000020 /* Landmark.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Landmark.swift; sourceTree = "<group>"; };
 		100000000000000000000021 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		100000000000000000000022 /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
+		100000000000000000000023 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		EF233E7D2F356929009EB732 /* GeoMath.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeoMath.swift; sourceTree = "<group>"; };
+		EF233E802F3683E8009EB732 /* Frinder.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Frinder.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -65,6 +73,7 @@
 			files = (
 				000000000000000000000019 /* FirebaseAuth in Frameworks */,
 				000000000000000000000020 /* FirebaseFirestore in Frameworks */,
+				000000000000000000000027 /* FirebaseMessaging in Frameworks */,
 				000000000000000000000023 /* GoogleSignIn in Frameworks */,
 				000000000000000000000024 /* GoogleSignInSwift in Frameworks */,
 			);
@@ -84,7 +93,10 @@
 		400000000000000000000002 /* Frinder */ = {
 			isa = PBXGroup;
 			children = (
+				EF233E802F3683E8009EB732 /* Frinder.entitlements */,
+				EF233E7E2F356929009EB732 /* Utilities */,
 				100000000000000000000001 /* FrinderApp.swift */,
+				100000000000000000000023 /* AppDelegate.swift */,
 				100000000000000000000002 /* ContentView.swift */,
 				400000000000000000000004 /* Models */,
 				400000000000000000000005 /* Views */,
@@ -145,8 +157,17 @@
 				100000000000000000000008 /* LocationService.swift */,
 				100000000000000000000009 /* MotionService.swift */,
 				100000000000000000000010 /* FriendService.swift */,
+				100000000000000000000022 /* NotificationService.swift */,
 			);
 			path = Services;
+			sourceTree = "<group>";
+		};
+		EF233E7E2F356929009EB732 /* Utilities */ = {
+			isa = PBXGroup;
+			children = (
+				EF233E7D2F356929009EB732 /* GeoMath.swift */,
+			);
+			path = Utilities;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -168,6 +189,7 @@
 			packageProductDependencies = (
 				200000000000000000000001 /* FirebaseAuth */,
 				200000000000000000000002 /* FirebaseFirestore */,
+				200000000000000000000005 /* FirebaseMessaging */,
 				200000000000000000000003 /* GoogleSignIn */,
 				200000000000000000000004 /* GoogleSignInSwift */,
 			);
@@ -238,6 +260,7 @@
 				000000000000000000000007 /* AuthService.swift in Sources */,
 				000000000000000000000008 /* LocationService.swift in Sources */,
 				000000000000000000000009 /* MotionService.swift in Sources */,
+				EF233E7F2F356929009EB732 /* GeoMath.swift in Sources */,
 				000000000000000000000010 /* FriendService.swift in Sources */,
 				000000000000000000000011 /* AuthViewModel.swift in Sources */,
 				000000000000000000000012 /* RadarViewModel.swift in Sources */,
@@ -247,6 +270,8 @@
 				000000000000000000000016 /* RadarView.swift in Sources */,
 				000000000000000000000017 /* FriendsView.swift in Sources */,
 				000000000000000000000018 /* SettingsView.swift in Sources */,
+				000000000000000000000025 /* NotificationService.swift in Sources */,
+				000000000000000000000026 /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -379,6 +404,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Frinder/Frinder.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 272VJ5UM9B;
@@ -412,6 +438,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Frinder/Frinder.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 272VJ5UM9B;
@@ -502,6 +529,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 800000000000000000000002 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
 			productName = GoogleSignInSwift;
+		};
+		200000000000000000000005 /* FirebaseMessaging */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 800000000000000000000001 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseMessaging;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

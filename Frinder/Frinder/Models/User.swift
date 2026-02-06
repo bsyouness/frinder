@@ -1,7 +1,7 @@
 import Foundation
 import CoreLocation
 
-struct User: Identifiable, Codable {
+struct User: Identifiable, Codable, Equatable {
     let id: String
     var email: String
     var displayName: String
@@ -25,7 +25,7 @@ struct User: Identifiable, Codable {
     }
 }
 
-struct UserLocation: Codable {
+struct UserLocation: Codable, Equatable {
     let latitude: Double
     let longitude: Double
     let timestamp: Date

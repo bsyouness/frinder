@@ -26,14 +26,18 @@ class FriendService: ObservableObject {
     }
 
     func sendFriendRequest(from senderId: String, to receiverEmail: String) async throws {
+        let normalizedEmail = receiverEmail.lowercased()
+
         // Find user by email
         let snapshot = try await db.collection("users")
-            .whereField("email", isEqualTo: receiverEmail.lowercased())
+            .whereField("email", isEqualTo: normalizedEmail)
             .limit(to: 1)
             .getDocuments()
 
+        // If user not found, create a pending invite instead
         guard let receiverDoc = snapshot.documents.first else {
-            throw FriendError.userNotFound
+            try await createPendingInvite(from: senderId, to: normalizedEmail)
+            throw FriendError.inviteSent
         }
 
         let receiverId = receiverDoc.documentID
@@ -51,6 +55,12 @@ class FriendService: ObservableObject {
             throw FriendError.alreadyFriends
         }
 
+        // Check if request already sent
+        let pendingRequests = senderData?["friendRequestsSent"] as? [String] ?? []
+        if pendingRequests.contains(receiverId) {
+            throw FriendError.requestAlreadySent
+        }
+
         // Add to pending requests
         try await db.collection("users").document(senderId).updateData([
             "friendRequestsSent": FieldValue.arrayUnion([receiverId])
@@ -59,6 +69,41 @@ class FriendService: ObservableObject {
         try await db.collection("users").document(receiverId).updateData([
             "friendRequestsReceived": FieldValue.arrayUnion([senderId])
         ])
+    }
+
+    private func createPendingInvite(from senderId: String, to inviteeEmail: String) async throws {
+        // Get sender info
+        let senderDoc = try await db.collection("users").document(senderId).getDocument()
+        guard let senderData = senderDoc.data(),
+              let senderName = senderData["displayName"] as? String,
+              let senderEmail = senderData["email"] as? String else {
+            throw FriendError.userNotFound
+        }
+
+        // Check if invite already exists
+        let existingInvite = try await db.collection("pendingInvites")
+            .whereField("inviterUserId", isEqualTo: senderId)
+            .whereField("inviteeEmail", isEqualTo: inviteeEmail)
+            .whereField("status", isEqualTo: "pending")
+            .limit(to: 1)
+            .getDocuments()
+
+        if !existingInvite.documents.isEmpty {
+            // Invite already exists, just return success
+            return
+        }
+
+        // Create pending invite document
+        let inviteData: [String: Any] = [
+            "inviterUserId": senderId,
+            "inviterName": senderName,
+            "inviterEmail": senderEmail,
+            "inviteeEmail": inviteeEmail,
+            "createdAt": Timestamp(date: Date()),
+            "status": "pending"
+        ]
+
+        try await db.collection("pendingInvites").addDocument(data: inviteData)
     }
 
     func acceptFriendRequest(userId: String, friendId: String) async throws {
@@ -192,6 +237,8 @@ enum FriendError: LocalizedError {
     case userNotFound
     case alreadyFriends
     case cannotAddSelf
+    case inviteSent
+    case requestAlreadySent
 
     var errorDescription: String? {
         switch self {
@@ -201,6 +248,10 @@ enum FriendError: LocalizedError {
             return "You're already friends with this user"
         case .cannotAddSelf:
             return "You cannot add yourself as a friend"
+        case .inviteSent:
+            return "Invite sent! They'll receive an email to join Frinder."
+        case .requestAlreadySent:
+            return "You've already sent a friend request to this user"
         }
     }
 }

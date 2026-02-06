@@ -41,6 +41,9 @@ class FriendsViewModel: ObservableObject {
         do {
             try await friendService.sendFriendRequest(from: userId, to: email)
             successMessage = "Friend request sent!"
+        } catch let error as FriendError where error == .inviteSent {
+            // inviteSent is a success case - user doesn't exist but invite was created
+            successMessage = error.errorDescription
         } catch {
             errorMessage = error.localizedDescription
         }
