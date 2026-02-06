@@ -140,7 +140,7 @@ class RadarViewModel: ObservableObject {
             screenWidth: size.width
         )
 
-        let elevation = GeoMath.scaledElevationAngle(forDistance: distance)
+        let elevation = GeoMath.trueElevationAngle(forDistance: distance)
         let y = GeoMath.screenY(
             elevation: elevation,
             devicePitch: devicePitch,
@@ -167,7 +167,7 @@ class RadarViewModel: ObservableObject {
             screenWidth: size.width
         )
 
-        let elevation = GeoMath.scaledElevationAngle(forDistance: distance)
+        let elevation = GeoMath.trueElevationAngle(forDistance: distance)
         let y = GeoMath.screenY(
             elevation: elevation,
             devicePitch: devicePitch,
