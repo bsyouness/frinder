@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 import CoreLocation
 import CoreMotion
 import Combine
@@ -188,6 +189,42 @@ class RadarViewModel: ObservableObject {
         )
     }
 
+    /// Project continent polygons to screen coordinates
+    func projectedContinents(in size: CGSize) -> [ProjectedContinent] {
+        guard let userLocation = currentLocation, let R = rotationMatrix else { return [] }
+        return ContinentData.continents.compactMap { continent -> ProjectedContinent? in
+            let points = GeoMath.projectPolygon(
+                from: userLocation.coordinate,
+                coordinates: continent.coordinates,
+                rotationMatrix: R,
+                horizontalFOV: horizontalFOV,
+                verticalFOV: verticalFOV,
+                screenSize: size
+            )
+            guard points.count >= 3 else { return nil }
+            return ProjectedContinent(name: continent.name, points: points)
+        }
+    }
+
+    /// Build a path for the earth fill below the horizon
+    func earthFillPath(in size: CGSize) -> Path {
+        let horizon = horizonPoints(in: size)
+        guard horizon.count >= 2 else { return Path() }
+        let sorted = horizon.sorted { $0.x < $1.x }
+
+        return Path { path in
+            // Start from bottom-left, trace up to first horizon point
+            path.move(to: CGPoint(x: 0, y: size.height))
+            path.addLine(to: CGPoint(x: sorted.first!.x, y: sorted.first!.y))
+            for pt in sorted.dropFirst() {
+                path.addLine(to: pt)
+            }
+            // Close along bottom-right
+            path.addLine(to: CGPoint(x: size.width, y: size.height))
+            path.closeSubpath()
+        }
+    }
+
     /// Cluster overlapping landmarks based on screen positions, hiding any that overlap with friends
     func clusterLandmarks(in size: CGSize, threshold: CGFloat = 60) -> [LandmarkCluster] {
         let friendPositions = visibleFriends.map { friendPosition(for: $0, in: size) }
@@ -248,4 +285,10 @@ struct LandmarkCluster: Identifiable {
 
     var isSingle: Bool { landmarks.count == 1 }
     var first: Landmark? { landmarks.first }
+}
+
+/// A continent polygon projected to screen coordinates
+struct ProjectedContinent {
+    let name: String
+    let points: [CGPoint]
 }

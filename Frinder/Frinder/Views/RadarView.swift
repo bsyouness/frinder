@@ -21,8 +21,12 @@ struct RadarView: View {
                         LocationDeniedView()
                     }
                 } else {
-                    // Horizon line
-                    HorizonLineView(points: radarViewModel.horizonPoints(in: geometry.size))
+                    // Earth visualization with horizon
+                    EarthView(
+                        horizonPoints: radarViewModel.horizonPoints(in: geometry.size),
+                        earthFillPath: radarViewModel.earthFillPath(in: geometry.size),
+                        continents: radarViewModel.projectedContinents(in: geometry.size)
+                    )
 
                     // Landmark dots (shown behind friends) - clustered when overlapping
                     if radarViewModel.showLandmarks {
@@ -257,19 +261,38 @@ struct LandmarkClusterView: View {
     }
 }
 
-struct HorizonLineView: View {
-    let points: [CGPoint]
+struct EarthView: View {
+    let horizonPoints: [CGPoint]
+    let earthFillPath: Path
+    let continents: [ProjectedContinent]
 
     var body: some View {
-        if points.count >= 2 {
-            Path { path in
-                let sorted = points.sorted { $0.x < $1.x }
-                path.move(to: sorted[0])
-                for point in sorted.dropFirst() {
-                    path.addLine(to: point)
+        Canvas { context, size in
+            // Earth fill below horizon
+            context.fill(earthFillPath, with: .color(.teal.opacity(0.08)))
+
+            // Continent shapes
+            for continent in continents {
+                guard continent.points.count >= 3 else { continue }
+                var path = Path()
+                path.move(to: continent.points[0])
+                for pt in continent.points.dropFirst() {
+                    path.addLine(to: pt)
                 }
+                path.closeSubpath()
+                context.fill(path, with: .color(.white.opacity(0.1)))
             }
-            .stroke(.white.opacity(0.3), lineWidth: 1)
+
+            // Horizon stroke line
+            if horizonPoints.count >= 2 {
+                let sorted = horizonPoints.sorted { $0.x < $1.x }
+                var line = Path()
+                line.move(to: sorted[0])
+                for pt in sorted.dropFirst() {
+                    line.addLine(to: pt)
+                }
+                context.stroke(line, with: .color(.white.opacity(0.3)), lineWidth: 1)
+            }
         }
     }
 }

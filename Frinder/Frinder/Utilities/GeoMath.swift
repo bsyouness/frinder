@@ -219,6 +219,27 @@ enum GeoMath {
         return points
     }
 
+    /// Project an array of lat/lon coordinates to screen points, returning only the visible ones
+    static func projectPolygon(
+        from origin: CLLocationCoordinate2D,
+        coordinates: [CLLocationCoordinate2D],
+        rotationMatrix: CMRotationMatrix,
+        horizontalFOV: Double,
+        verticalFOV: Double,
+        screenSize: CGSize
+    ) -> [CGPoint] {
+        coordinates.compactMap { coord in
+            let dir = directionVector(from: origin, to: coord)
+            return projectToScreen(
+                worldDirection: dir,
+                rotationMatrix: rotationMatrix,
+                horizontalFOV: horizontalFOV,
+                verticalFOV: verticalFOV,
+                screenSize: screenSize
+            )
+        }
+    }
+
     /// Extract device heading from rotation matrix (for compass display)
     /// - Returns: Heading in degrees (0-360)
     static func headingFromRotationMatrix(_ R: CMRotationMatrix) -> Double {

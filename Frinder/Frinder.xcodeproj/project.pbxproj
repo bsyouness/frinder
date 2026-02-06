@@ -35,6 +35,7 @@
 		000000000000000000000026 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000023 /* AppDelegate.swift */; };
 		000000000000000000000027 /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = 200000000000000000000005 /* FirebaseMessaging */; };
 		EF233E7F2F356929009EB732 /* GeoMath.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF233E7D2F356929009EB732 /* GeoMath.swift */; };
+		AA0000000000000000000001 /* ContinentData.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000002 /* ContinentData.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -64,6 +65,7 @@
 		100000000000000000000023 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		EF233E7D2F356929009EB732 /* GeoMath.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeoMath.swift; sourceTree = "<group>"; };
 		EF233E802F3683E8009EB732 /* Frinder.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Frinder.entitlements; sourceTree = "<group>"; };
+		AA0000000000000000000002 /* ContinentData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContinentData.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -124,6 +126,7 @@
 				100000000000000000000005 /* Friend.swift */,
 				100000000000000000000006 /* Settings.swift */,
 				100000000000000000000020 /* Landmark.swift */,
+				AA0000000000000000000002 /* ContinentData.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -272,6 +275,7 @@
 				000000000000000000000018 /* SettingsView.swift in Sources */,
 				000000000000000000000025 /* NotificationService.swift in Sources */,
 				000000000000000000000026 /* AppDelegate.swift in Sources */,
+				AA0000000000000000000001 /* ContinentData.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
