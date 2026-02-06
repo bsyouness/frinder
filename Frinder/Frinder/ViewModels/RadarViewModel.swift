@@ -188,9 +188,17 @@ class RadarViewModel: ObservableObject {
         )
     }
 
-    /// Cluster overlapping landmarks based on screen positions
+    /// Cluster overlapping landmarks based on screen positions, hiding any that overlap with friends
     func clusterLandmarks(in size: CGSize, threshold: CGFloat = 60) -> [LandmarkCluster] {
-        let visible = visibleLandmarks
+        let friendPositions = visibleFriends.map { friendPosition(for: $0, in: size) }
+
+        // Filter out landmarks that overlap with any friend
+        let visible = visibleLandmarks.filter { landmark in
+            let pos = landmarkPosition(for: landmark, in: size)
+            return !friendPositions.contains { friendPos in
+                hypot(pos.x - friendPos.x, pos.y - friendPos.y) < threshold
+            }
+        }
         guard !visible.isEmpty else { return [] }
 
         var clusters: [LandmarkCluster] = []
