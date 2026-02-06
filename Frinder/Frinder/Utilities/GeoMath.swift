@@ -1,5 +1,6 @@
 import Foundation
 import CoreLocation
+import CoreMotion
 
 /// Geographic and angular math utilities for radar positioning
 enum GeoMath {
@@ -136,6 +137,101 @@ enum GeoMath {
         // Map to screen: negative = below view center = lower on screen (higher Y)
         let normalizedY = 0.5 - (relativeElevation / (2.0 * halfVFOV))
         return normalizedY * screenHeight
+    }
+
+    // MARK: - Sphere Projection (Sky Guide-style)
+
+    /// Convert two coordinates into a unit direction vector in NWU reference frame
+    /// (North = +x, West = +y, Up = +z) matching Apple's xTrueNorthZVertical frame
+    static func directionVector(
+        from: CLLocationCoordinate2D,
+        to: CLLocationCoordinate2D
+    ) -> (x: Double, y: Double, z: Double) {
+        let azimuth = bearing(from: from, to: to).toRadians()
+        let dist = distance(from: from, to: to)
+        let elevation = trueElevationAngle(forDistance: dist)
+
+        let cosE = cos(elevation)
+        let x = cosE * cos(azimuth)   // North component
+        let y = -cosE * sin(azimuth)  // West component (negative sin because West = +y)
+        let z = sin(elevation)         // Up component
+
+        return (x, y, z)
+    }
+
+    /// Project a world-space direction vector onto the screen using the device rotation matrix
+    /// - Returns: Screen point, or nil if the target is behind the device
+    static func projectToScreen(
+        worldDirection: (x: Double, y: Double, z: Double),
+        rotationMatrix: CMRotationMatrix,
+        horizontalFOV: Double,
+        verticalFOV: Double,
+        screenSize: CGSize
+    ) -> CGPoint? {
+        let R = rotationMatrix
+
+        // Apple's CMRotationMatrix maps world → device: deviceVec = R * worldVec
+        let dx = R.m11 * worldDirection.x + R.m12 * worldDirection.y + R.m13 * worldDirection.z
+        let dy = R.m21 * worldDirection.x + R.m22 * worldDirection.y + R.m23 * worldDirection.z
+        let dz = R.m31 * worldDirection.x + R.m32 * worldDirection.y + R.m33 * worldDirection.z
+
+        // In device frame: x = right, y = up (top of phone), z = out of screen
+        // Point is in front of the device if dz < 0
+        guard dz < 0 else { return nil }
+
+        // Angular projection
+        let angleX = atan2(dx, -dz)
+        let angleY = atan2(dy, -dz)
+
+        let hFOVRad = horizontalFOV.toRadians()
+        let vFOVRad = verticalFOV.toRadians()
+        let halfW = screenSize.width / 2.0
+        let halfH = screenSize.height / 2.0
+
+        let px = halfW + CGFloat(angleX / (hFOVRad / 2.0)) * halfW
+        let py = halfH - CGFloat(angleY / (vFOVRad / 2.0)) * halfH
+
+        return CGPoint(x: px, y: py)
+    }
+
+    /// Compute visible horizon line points by sampling azimuth around the sphere
+    static func horizonScreenPoints(
+        rotationMatrix: CMRotationMatrix,
+        horizontalFOV: Double,
+        verticalFOV: Double,
+        screenSize: CGSize
+    ) -> [CGPoint] {
+        var points: [CGPoint] = []
+        // Sample azimuth 0°..360° in 2° steps, elevation = 0 (horizon)
+        for azDeg in stride(from: 0.0, through: 360.0, by: 2.0) {
+            let az = azDeg.toRadians()
+            let worldDir = (x: cos(az), y: -sin(az), z: 0.0)
+            if let pt = projectToScreen(
+                worldDirection: worldDir,
+                rotationMatrix: rotationMatrix,
+                horizontalFOV: horizontalFOV,
+                verticalFOV: verticalFOV,
+                screenSize: screenSize
+            ) {
+                points.append(pt)
+            }
+        }
+        return points
+    }
+
+    /// Extract device heading from rotation matrix (for compass display)
+    /// - Returns: Heading in degrees (0-360)
+    static func headingFromRotationMatrix(_ R: CMRotationMatrix) -> Double {
+        // R maps world→device. To get device forward (0,0,-1) in world coords,
+        // use R^T (device→world): world = R^T * device
+        // world_i = sum_j R[j][i] * d[j]
+        // For d = (0,0,-1): world_i = -R[3][i] = -R.m3{i}
+        let forwardNorth = -R.m31  // world x (North)
+        let forwardWest = -R.m32   // world y (West)
+        // Azimuth from North, clockwise: atan2(East, North) = atan2(-West, North)
+        var heading = atan2(-forwardWest, forwardNorth).toDegrees()
+        if heading < 0 { heading += 360 }
+        return heading
     }
 }
 

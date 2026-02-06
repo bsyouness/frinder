@@ -21,6 +21,9 @@ struct RadarView: View {
                         LocationDeniedView()
                     }
                 } else {
+                    // Horizon line
+                    HorizonLineView(points: radarViewModel.horizonPoints(in: geometry.size))
+
                     // Landmark dots (shown behind friends) - clustered when overlapping
                     if radarViewModel.showLandmarks {
                         let clusters = radarViewModel.clusterLandmarks(in: geometry.size)
@@ -251,6 +254,23 @@ struct LandmarkClusterView: View {
         .position(cluster.position)
         .animation(.easeOut(duration: 0.1), value: cluster.position.x)
         .animation(.easeOut(duration: 0.1), value: cluster.position.y)
+    }
+}
+
+struct HorizonLineView: View {
+    let points: [CGPoint]
+
+    var body: some View {
+        if points.count >= 2 {
+            Path { path in
+                let sorted = points.sorted { $0.x < $1.x }
+                path.move(to: sorted[0])
+                for point in sorted.dropFirst() {
+                    path.addLine(to: point)
+                }
+            }
+            .stroke(.white.opacity(0.3), lineWidth: 1)
+        }
     }
 }
 

@@ -1,12 +1,13 @@
 import Foundation
 import CoreLocation
+import CoreMotion
 import Combine
 
 @MainActor
 class RadarViewModel: ObservableObject {
     @Published var friends: [Friend] = []
     @Published var deviceHeading: Double = 0
-    @Published var devicePitch: Double = 0 // Tilt forward/backward in radians
+    @Published var rotationMatrix: CMRotationMatrix?
     @Published var currentLocation: CLLocation?
     @Published var isLocationAuthorized = false
     @Published var locationAuthorizationStatus: CLAuthorizationStatus = .notDetermined
@@ -21,28 +22,35 @@ class RadarViewModel: ObservableObject {
 
     /// Get landmarks that are within the current field of view
     var visibleLandmarks: [Landmark] {
-        guard let userLocation = currentLocation else { return [] }
+        guard let userLocation = currentLocation, let R = rotationMatrix else { return [] }
+        let screenSize = CGSize(width: 400, height: 800) // reference size for visibility check
         return landmarks.filter { landmark in
-            isWithinFieldOfView(bearing: landmark.bearing(from: userLocation.coordinate))
+            let dir = GeoMath.directionVector(from: userLocation.coordinate, to: landmark.coordinate)
+            return GeoMath.projectToScreen(
+                worldDirection: dir,
+                rotationMatrix: R,
+                horizontalFOV: horizontalFOV,
+                verticalFOV: verticalFOV,
+                screenSize: screenSize
+            ) != nil
         }
     }
 
     /// Get friends that are within the current field of view
     var visibleFriends: [Friend] {
-        guard let userLocation = currentLocation else { return [] }
+        guard let userLocation = currentLocation, let R = rotationMatrix else { return [] }
+        let screenSize = CGSize(width: 400, height: 800)
         return friends.filter { friend in
-            guard let bearing = friend.bearing(from: userLocation) else { return false }
-            return isWithinFieldOfView(bearing: bearing)
+            guard let coord = friend.location?.coordinate else { return false }
+            let dir = GeoMath.directionVector(from: userLocation.coordinate, to: coord)
+            return GeoMath.projectToScreen(
+                worldDirection: dir,
+                rotationMatrix: R,
+                horizontalFOV: horizontalFOV,
+                verticalFOV: verticalFOV,
+                screenSize: screenSize
+            ) != nil
         }
-    }
-
-    /// Check if a bearing is within the current horizontal field of view
-    private func isWithinFieldOfView(bearing: Double) -> Bool {
-        return GeoMath.isWithinHorizontalFOV(
-            bearing: bearing,
-            deviceHeading: deviceHeading,
-            fieldOfView: horizontalFOV
-        )
     }
 
     private let locationService = LocationService.shared
@@ -69,19 +77,14 @@ class RadarViewModel: ObservableObject {
             }
             .store(in: &cancellables)
 
-        // Bind heading updates
-        locationService.$currentHeading
+        // Bind rotation matrix from MotionService
+        motionService.$rotationMatrix
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] heading in
-                self?.deviceHeading = heading
-            }
-            .store(in: &cancellables)
-
-        // Bind pitch updates (tilt forward/backward)
-        motionService.$pitch
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] pitch in
-                self?.devicePitch = pitch
+            .sink { [weak self] matrix in
+                self?.rotationMatrix = matrix
+                if let R = matrix {
+                    self?.deviceHeading = GeoMath.headingFromRotationMatrix(R)
+                }
             }
             .store(in: &cancellables)
 
@@ -128,54 +131,43 @@ class RadarViewModel: ObservableObject {
     /// Calculate the position of a friend on the radar view
     func friendPosition(for friend: Friend, in size: CGSize) -> CGPoint {
         guard let userLocation = currentLocation,
-              let bearing = friend.bearing(from: userLocation),
-              let distance = friend.distance(from: userLocation) else {
-            return .zero
+              let coord = friend.location?.coordinate,
+              let R = rotationMatrix else {
+            return CGPoint(x: size.width / 2, y: size.height / 2)
         }
 
-        let x = GeoMath.screenX(
-            bearing: bearing,
-            deviceHeading: deviceHeading,
+        let dir = GeoMath.directionVector(from: userLocation.coordinate, to: coord)
+        if let pt = GeoMath.projectToScreen(
+            worldDirection: dir,
+            rotationMatrix: R,
             horizontalFOV: horizontalFOV,
-            screenWidth: size.width
-        )
-
-        let elevation = GeoMath.trueElevationAngle(forDistance: distance)
-        let y = GeoMath.screenY(
-            elevation: elevation,
-            devicePitch: devicePitch,
             verticalFOV: verticalFOV,
-            screenHeight: size.height
-        )
-
-        return CGPoint(x: x, y: y)
+            screenSize: size
+        ) {
+            return pt
+        }
+        // Off-screen sentinel
+        return CGPoint(x: -1000, y: -1000)
     }
 
     /// Calculate the position of a landmark on the radar view
     func landmarkPosition(for landmark: Landmark, in size: CGSize) -> CGPoint {
-        guard let userLocation = currentLocation else {
-            return .zero
+        guard let userLocation = currentLocation,
+              let R = rotationMatrix else {
+            return CGPoint(x: size.width / 2, y: size.height / 2)
         }
 
-        let bearing = landmark.bearing(from: userLocation.coordinate)
-        let distance = landmark.distance(from: userLocation.coordinate)
-
-        let x = GeoMath.screenX(
-            bearing: bearing,
-            deviceHeading: deviceHeading,
+        let dir = GeoMath.directionVector(from: userLocation.coordinate, to: landmark.coordinate)
+        if let pt = GeoMath.projectToScreen(
+            worldDirection: dir,
+            rotationMatrix: R,
             horizontalFOV: horizontalFOV,
-            screenWidth: size.width
-        )
-
-        let elevation = GeoMath.trueElevationAngle(forDistance: distance)
-        let y = GeoMath.screenY(
-            elevation: elevation,
-            devicePitch: devicePitch,
             verticalFOV: verticalFOV,
-            screenHeight: size.height
-        )
-
-        return CGPoint(x: x, y: y)
+            screenSize: size
+        ) {
+            return pt
+        }
+        return CGPoint(x: -1000, y: -1000)
     }
 
     /// Get distance to landmark formatted as string
@@ -183,6 +175,17 @@ class RadarViewModel: ObservableObject {
         guard let userLocation = currentLocation else { return nil }
         let distance = landmark.distance(from: userLocation.coordinate)
         return AppSettings.shared.distanceUnit.format(meters: distance)
+    }
+
+    /// Compute horizon line points for the current view
+    func horizonPoints(in size: CGSize) -> [CGPoint] {
+        guard let R = rotationMatrix else { return [] }
+        return GeoMath.horizonScreenPoints(
+            rotationMatrix: R,
+            horizontalFOV: horizontalFOV,
+            verticalFOV: verticalFOV,
+            screenSize: size
+        )
     }
 
     /// Cluster overlapping landmarks based on screen positions

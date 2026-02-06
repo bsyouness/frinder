@@ -1,5 +1,6 @@
 import XCTest
 import CoreLocation
+import CoreMotion
 @testable import Frinder
 
 final class GeoMathTests: XCTestCase {
@@ -346,5 +347,187 @@ final class GeoMathTests: XCTestCase {
         // Both should be negative (below horizon)
         XCTAssertLessThan(elevationNear, 0)
         XCTAssertLessThan(elevationFar, 0)
+    }
+
+    // MARK: - Direction Vector Tests
+
+    func testDirectionVectorDueNorth() {
+        // Target due north should give direction roughly (1, 0, z) where z < 0
+        let origin = CLLocationCoordinate2D(latitude: 40.0, longitude: -74.0)
+        let north = CLLocationCoordinate2D(latitude: 41.0, longitude: -74.0)
+
+        let dir = GeoMath.directionVector(from: origin, to: north)
+
+        XCTAssertGreaterThan(dir.x, 0.9, "North component should dominate")
+        XCTAssertEqual(dir.y, 0, accuracy: 0.05, "West component should be ~0")
+        XCTAssertLessThan(dir.z, 0, "Elevation should be negative (below horizon)")
+    }
+
+    func testDirectionVectorDueEast() {
+        // Target due east: bearing = 90°, so x = cos(90°)=0, y = -sin(90°)=-1
+        let origin = CLLocationCoordinate2D(latitude: 40.0, longitude: -75.0)
+        let east = CLLocationCoordinate2D(latitude: 40.0, longitude: -74.0)
+
+        let dir = GeoMath.directionVector(from: origin, to: east)
+
+        XCTAssertEqual(dir.x, 0, accuracy: 0.05, "North component should be ~0")
+        XCTAssertLessThan(dir.y, -0.9, "West component should be strongly negative (= East)")
+    }
+
+    func testDirectionVectorSamePoint() {
+        // Same point: distance=0, elevation=0, bearing is undefined but vector should have z=0
+        let origin = CLLocationCoordinate2D(latitude: 40.0, longitude: -74.0)
+
+        let dir = GeoMath.directionVector(from: origin, to: origin)
+
+        XCTAssertEqual(dir.z, 0, accuracy: 0.001, "Same point elevation should be 0")
+    }
+
+    // MARK: - Sphere Projection Tests
+
+    /// Helper to create an identity rotation matrix
+    private func identityRotationMatrix() -> CMRotationMatrix {
+        return CMRotationMatrix(
+            m11: 1, m12: 0, m13: 0,
+            m21: 0, m22: 1, m23: 0,
+            m31: 0, m32: 0, m33: 1
+        )
+    }
+
+    func testProjectToScreenIdentityMatrixNorth() {
+        // Phone upright facing north. R maps world→device:
+        // World North (1,0,0) → device -z (0,0,-1) = into screen
+        // World West (0,1,0) → device -x (-1,0,0) = left
+        // World Up (0,0,1) → device +y (0,1,0) = top of phone
+        let R = CMRotationMatrix(
+            m11: 0, m12: -1, m13: 0,
+            m21: 0, m22: 0, m23: 1,
+            m31: -1, m32: 0, m33: 0
+        )
+
+        let screenSize = CGSize(width: 400, height: 800)
+        // Point due north on horizon: world (1, 0, 0)
+        let northDir = (x: 1.0, y: 0.0, z: 0.0)
+        let pt = GeoMath.projectToScreen(
+            worldDirection: northDir,
+            rotationMatrix: R,
+            horizontalFOV: 60,
+            verticalFOV: 90,
+            screenSize: screenSize
+        )
+
+        XCTAssertNotNil(pt, "North should be visible when phone faces north")
+        if let pt = pt {
+            XCTAssertEqual(pt.x, 200, accuracy: 5, "North should be at horizontal center")
+            XCTAssertEqual(pt.y, 400, accuracy: 5, "Horizon should be at vertical center")
+        }
+    }
+
+    func testProjectToScreenBehindDevice() {
+        // Phone upright facing north (same R as above)
+        let R = CMRotationMatrix(
+            m11: 0, m12: -1, m13: 0,
+            m21: 0, m22: 0, m23: 1,
+            m31: -1, m32: 0, m33: 0
+        )
+
+        let screenSize = CGSize(width: 400, height: 800)
+        // Point due south: world (-1, 0, 0) — should be behind the device
+        let southDir = (x: -1.0, y: 0.0, z: 0.0)
+        let pt = GeoMath.projectToScreen(
+            worldDirection: southDir,
+            rotationMatrix: R,
+            horizontalFOV: 60,
+            verticalFOV: 90,
+            screenSize: screenSize
+        )
+
+        XCTAssertNil(pt, "South should not be visible when phone faces north")
+    }
+
+    func testProjectToScreenEastIsRight() {
+        // Phone upright facing north
+        let R = CMRotationMatrix(
+            m11: 0, m12: -1, m13: 0,
+            m21: 0, m22: 0, m23: 1,
+            m31: -1, m32: 0, m33: 0
+        )
+
+        let screenSize = CGSize(width: 400, height: 800)
+        // Point slightly east of north: bearing ~20° → world (cos20, -sin20, 0)
+        let az = 20.0.toRadians()
+        let eastishDir = (x: cos(az), y: -sin(az), z: 0.0)
+        let pt = GeoMath.projectToScreen(
+            worldDirection: eastishDir,
+            rotationMatrix: R,
+            horizontalFOV: 60,
+            verticalFOV: 90,
+            screenSize: screenSize
+        )
+
+        XCTAssertNotNil(pt)
+        if let pt = pt {
+            XCTAssertGreaterThan(pt.x, 200, "East-of-north should be right of center")
+        }
+    }
+
+    func testProjectToScreenUpIsAbove() {
+        // Phone upright facing north
+        let R = CMRotationMatrix(
+            m11: 0, m12: -1, m13: 0,
+            m21: 0, m22: 0, m23: 1,
+            m31: -1, m32: 0, m33: 0
+        )
+
+        let screenSize = CGSize(width: 400, height: 800)
+        // Point slightly above horizon due north: world (cos10, 0, sin10)
+        let el = 10.0.toRadians()
+        let upDir = (x: cos(el), y: 0.0, z: sin(el))
+        let pt = GeoMath.projectToScreen(
+            worldDirection: upDir,
+            rotationMatrix: R,
+            horizontalFOV: 60,
+            verticalFOV: 90,
+            screenSize: screenSize
+        )
+
+        XCTAssertNotNil(pt)
+        if let pt = pt {
+            XCTAssertLessThan(pt.y, 400, "Above horizon should be above screen center (lower y)")
+        }
+    }
+
+    // MARK: - Heading from Rotation Matrix Tests
+
+    func testHeadingFromRotationMatrixFacingNorth() {
+        // Phone upright facing north
+        let R = CMRotationMatrix(
+            m11: 0, m12: -1, m13: 0,
+            m21: 0, m22: 0, m23: 1,
+            m31: -1, m32: 0, m33: 0
+        )
+
+        let heading = GeoMath.headingFromRotationMatrix(R)
+        XCTAssertEqual(heading, 0, accuracy: 1, "Should report heading ~0° (north)")
+    }
+
+    // MARK: - Horizon Points Tests
+
+    func testHorizonPointsNotEmpty() {
+        // Phone upright facing north — should have some visible horizon points
+        let R = CMRotationMatrix(
+            m11: 0, m12: -1, m13: 0,
+            m21: 0, m22: 0, m23: 1,
+            m31: -1, m32: 0, m33: 0
+        )
+
+        let points = GeoMath.horizonScreenPoints(
+            rotationMatrix: R,
+            horizontalFOV: 60,
+            verticalFOV: 90,
+            screenSize: CGSize(width: 400, height: 800)
+        )
+
+        XCTAssertFalse(points.isEmpty, "Should have visible horizon points")
     }
 }
