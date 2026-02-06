@@ -18,7 +18,7 @@ xcuserdata/
 # Swift Package Manager
 .build/
 .swiftpm/
-Package.resolved
+# Package.resolved — must be checked in for Xcode Cloud
 
 # CocoaPods
 Pods/
@@ -47,3 +47,7 @@ Thumbs.db
 
 # Secrets (uncomment if you add real credentials)
 # *.plist
+
+# Firebase Functions
+functions/node_modules/
+functions/lib/
