@@ -114,8 +114,8 @@ struct FriendDotView: View {
             }
         }
         .position(position)
-        .animation(.easeOut(duration: 0.1), value: position.x)
-        .animation(.easeOut(duration: 0.1), value: position.y)
+        .animation(.easeOut(duration: 0.5), value: position.x)
+        .animation(.easeOut(duration: 0.5), value: position.y)
     }
 }
 

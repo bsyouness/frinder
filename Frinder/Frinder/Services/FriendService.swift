@@ -1,5 +1,6 @@
 import Foundation
 import FirebaseFirestore
+import CoreLocation
 import Combine
 
 class FriendService: ObservableObject {
@@ -10,6 +11,9 @@ class FriendService: ObservableObject {
     private var friendsListener: ListenerRegistration?
 
     @Published var friends: [Friend] = []
+
+    /// Displayed locations for distance threshold filtering (prevents GPS jitter)
+    private var displayedLocations: [String: UserLocation] = [:]
 
     private init() {}
 
@@ -192,9 +196,30 @@ class FriendService: ObservableObject {
                        let lat = locationData["latitude"] as? Double,
                        let lon = locationData["longitude"] as? Double,
                        let ts = locationData["timestamp"] as? Timestamp {
-                        location = UserLocation(
+                        let newLocation = UserLocation(
                             latitude: lat, longitude: lon, timestamp: ts.dateValue()
                         )
+
+                        // Apply distance threshold to prevent GPS jitter
+                        let friendId = doc.documentID
+                        if let existing = self.displayedLocations[friendId] {
+                            let oldCL = CLLocation(latitude: existing.latitude, longitude: existing.longitude)
+                            let newCL = CLLocation(latitude: lat, longitude: lon)
+                            if newCL.distance(from: oldCL) > 10 {
+                                self.displayedLocations[friendId] = newLocation
+                                location = newLocation
+                            } else {
+                                // Keep existing position but update timestamp
+                                location = UserLocation(
+                                    latitude: existing.latitude,
+                                    longitude: existing.longitude,
+                                    timestamp: ts.dateValue()
+                                )
+                            }
+                        } else {
+                            self.displayedLocations[friendId] = newLocation
+                            location = newLocation
+                        }
                     }
 
                     return Friend(
@@ -213,6 +238,7 @@ class FriendService: ObservableObject {
         locationListener = nil
         friendsListener = nil
         friends = []
+        displayedLocations = [:]
     }
 
     func fetchPendingRequests(userId: String) async throws -> [User] {
