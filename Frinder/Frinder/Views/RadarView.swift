@@ -65,13 +65,23 @@ struct RadarView: View {
                 }
 
                 // Navigation arrow overlay
-                if radarViewModel.targetFriend != nil,
-                   !radarViewModel.visibleFriends.contains(where: { $0.id == radarViewModel.targetFriend?.id }) {
-                    NavigationArrowView(
-                        friendName: radarViewModel.targetFriend?.displayName ?? "",
-                        angle: radarViewModel.arrowAngle() ?? 0
-                    ) {
-                        radarViewModel.targetFriend = nil
+                if let target = radarViewModel.targetFriend {
+                    let pos = radarViewModel.friendPosition(for: target, in: geometry.size)
+                    let center = CGPoint(x: geometry.size.width / 2, y: geometry.size.height / 2)
+                    let dist = hypot(pos.x - center.x, pos.y - center.y)
+
+                    if dist > 150 || pos.x < 0 {
+                        NavigationArrowView(
+                            friendName: target.displayName,
+                            angle: radarViewModel.arrowAngle() ?? 0
+                        ) {
+                            radarViewModel.targetFriend = nil
+                        }
+                    } else {
+                        // Friend is near center — auto-clear
+                        Color.clear.onAppear {
+                            radarViewModel.targetFriend = nil
+                        }
                     }
                 }
 
@@ -90,8 +100,21 @@ struct FriendDotView: View {
     let friend: Friend
     let userLocation: CLLocation?
     @ObservedObject var settings = AppSettings.shared
+    @State private var showLastSeen = false
 
     let position: CGPoint
+
+    private func lastSeenText() -> String? {
+        guard let timestamp = friend.location?.timestamp else { return nil }
+        let age = Date().timeIntervalSince(timestamp)
+        if age < 60 { return "Updated just now" }
+        let minutes = Int(age / 60)
+        if minutes < 60 { return "Updated \(minutes)m ago" }
+        let hours = minutes / 60
+        if hours < 24 { return "Updated \(hours)h ago" }
+        let days = hours / 24
+        return "Updated \(days)d ago"
+    }
 
     var body: some View {
         VStack(spacing: 4) {
@@ -123,6 +146,17 @@ struct FriendDotView: View {
                     .font(.caption2)
                     .foregroundStyle(.white.opacity(0.7))
             }
+
+            // Last seen (shown on tap)
+            if showLastSeen, let text = lastSeenText() {
+                Text(text)
+                    .font(.caption2)
+                    .foregroundStyle(.white.opacity(0.6))
+                    .transition(.opacity)
+            }
+        }
+        .onTapGesture {
+            withAnimation { showLastSeen.toggle() }
         }
         .position(position)
         .animation(.easeOut(duration: 0.5), value: position.x)

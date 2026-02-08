@@ -86,11 +86,6 @@ struct FriendRow: View {
     let friend: Friend
     var onNavigate: ((Friend) -> Void)? = nil
 
-    var isOnline: Bool {
-        guard let location = friend.location else { return false }
-        return Date().timeIntervalSince(location.timestamp) < 300
-    }
-
     private func relativeTime(_ interval: TimeInterval) -> String {
         let minutes = Int(interval / 60)
         if minutes < 60 { return "\(minutes)m ago" }
@@ -153,11 +148,16 @@ struct FriendRow: View {
             }
 
             Spacer()
+
+            if friend.location != nil, onNavigate != nil {
+                Image(systemName: "location.circle")
+                    .foregroundStyle(.blue)
+            }
         }
         .padding(.vertical, 4)
         .contentShape(Rectangle())
         .onTapGesture {
-            if isOnline {
+            if friend.location != nil {
                 onNavigate?(friend)
             }
         }

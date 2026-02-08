@@ -38,14 +38,12 @@ class RadarViewModel: ObservableObject {
         }
     }
 
-    /// Get friends that are within the current field of view (excludes stale >5min)
+    /// Get friends that are within the current field of view
     var visibleFriends: [Friend] {
         guard let userLocation = currentLocation, let R = rotationMatrix else { return [] }
         let screenSize = CGSize(width: 400, height: 800)
-        let now = Date()
-        let result = friends.filter { friend in
-            guard let location = friend.location,
-                  now.timeIntervalSince(location.timestamp) < 300 else { return false }
+        return friends.filter { friend in
+            guard let location = friend.location else { return false }
             let dir = GeoMath.directionVector(from: userLocation.coordinate, to: location.coordinate)
             return GeoMath.projectToScreen(
                 worldDirection: dir,
@@ -55,11 +53,6 @@ class RadarViewModel: ObservableObject {
                 screenSize: screenSize
             ) != nil
         }
-        // Auto-clear target if they become visible on screen
-        if let target = targetFriend, result.contains(where: { $0.id == target.id }) {
-            Task { @MainActor in self.targetFriend = nil }
-        }
-        return result
     }
 
     /// Compute the angle (in degrees) from screen center toward the target friend
