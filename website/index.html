@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frinder - Find Your Friends in AR</title>
+    <meta name="description" content="Point your phone and see where your friends are. Frinder uses augmented reality to show friends and landmarks on a live radar view.">
+    <meta property="og:title" content="Frinder - Find Your Friends in AR">
+    <meta property="og:description" content="Point your phone and see where your friends are. AR-powered friend radar for iOS.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://frinder.me">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #000;
+            color: #fff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .hero {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 60px 24px;
+            position: relative;
+        }
+
+        /* Subtle green glow at bottom to mirror the app */
+        .hero::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 40%;
+            background: radial-gradient(ellipse at 50% 100%, rgba(34, 139, 34, 0.08) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 80px;
+            max-width: 1100px;
+            width: 100%;
+            position: relative;
+            z-index: 1;
+        }
+
+        .text-side {
+            flex: 1;
+            max-width: 480px;
+        }
+
+        .app-icon {
+            width: 72px;
+            height: 72px;
+            background: linear-gradient(135deg, #1a1a2e, #0d0d1a);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            margin-bottom: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        h1 {
+            font-size: 56px;
+            font-weight: 700;
+            letter-spacing: -1px;
+            margin-bottom: 16px;
+        }
+
+        .tagline {
+            font-size: 22px;
+            color: rgba(255, 255, 255, 0.7);
+            line-height: 1.5;
+            margin-bottom: 40px;
+        }
+
+        .features {
+            list-style: none;
+            margin-bottom: 48px;
+        }
+
+        .features li {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            margin-bottom: 20px;
+            font-size: 17px;
+            color: rgba(255, 255, 255, 0.8);
+            line-height: 1.5;
+        }
+
+        .features li .icon {
+            font-size: 22px;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+
+        .app-store-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            background: #fff;
+            color: #000;
+            text-decoration: none;
+            padding: 14px 32px;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            transition: transform 0.2s, opacity 0.2s;
+        }
+
+        .app-store-btn:hover {
+            transform: scale(1.03);
+            opacity: 0.93;
+        }
+
+        .app-store-btn svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        .coming-soon {
+            display: block;
+            margin-top: 8px;
+            font-size: 13px;
+            font-weight: 400;
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        /* Phone mockup */
+        .phone-side {
+            flex-shrink: 0;
+            position: relative;
+        }
+
+        .phone-frame {
+            width: 280px;
+            height: 572px;
+            border-radius: 40px;
+            border: 4px solid rgba(255, 255, 255, 0.15);
+            overflow: hidden;
+            background: #000;
+            box-shadow: 0 40px 80px rgba(0, 0, 0, 0.5);
+            position: relative;
+        }
+
+        .phone-frame img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* Notch */
+        .phone-frame::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 28px;
+            background: #000;
+            border-radius: 0 0 18px 18px;
+            z-index: 2;
+        }
+
+        /* Star dots background */
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 60%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .star {
+            position: absolute;
+            background: #fff;
+            border-radius: 50%;
+        }
+
+        footer {
+            text-align: center;
+            padding: 32px 24px;
+            color: rgba(255, 255, 255, 0.3);
+            font-size: 14px;
+            position: relative;
+            z-index: 1;
+        }
+
+        footer a {
+            color: rgba(255, 255, 255, 0.4);
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        /* Responsive */
+        @media (max-width: 860px) {
+            .content {
+                flex-direction: column-reverse;
+                gap: 48px;
+            }
+
+            .text-side {
+                text-align: center;
+                max-width: 100%;
+            }
+
+            .app-icon {
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+            h1 {
+                font-size: 40px;
+            }
+
+            .tagline {
+                font-size: 19px;
+            }
+
+            .features {
+                display: inline-block;
+                text-align: left;
+            }
+
+            .phone-frame {
+                width: 240px;
+                height: 490px;
+                border-radius: 34px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Background stars -->
+    <div class="stars" id="stars"></div>
+
+    <section class="hero">
+        <div class="content">
+            <div class="text-side">
+                <div class="app-icon">
+                    <img src="appicon.png" alt="Frinder app icon" width="72" height="72" style="border-radius: 16px; box-shadow: 0 0 20px rgba(255,255,255,0.3), 0 0 40px rgba(255,255,255,0.1);">
+                </div>
+                <h1>Frinder</h1>
+                <p class="tagline">Point your phone and see where your friends are. An AR-powered radar that shows friends and landmarks around you in real time.</p>
+
+                <ul class="features">
+                    <li>
+                        <span class="icon">&#x1F4E1;</span>
+                        <span>See friends on a live radar &mdash; just point your phone in their direction</span>
+                    </li>
+                    <li>
+                        <span class="icon">&#x1F5FA;</span>
+                        <span>Discover nearby landmarks like mountains, waterfalls, and monuments</span>
+                    </li>
+                    <li>
+                        <span class="icon">&#x1F30C;</span>
+                        <span>Day and night sky visuals with real-time compass and horizon line</span>
+                    </li>
+                    <li>
+                        <span class="icon">&#x1F464;</span>
+                        <span>Add friends, share your location, and find each other instantly</span>
+                    </li>
+                </ul>
+
+                <a href="#" class="app-store-btn" onclick="return false;">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5C17.88 20.74 17 21.95 15.66 21.97C14.32 22 13.89 21.18 12.37 21.18C10.84 21.18 10.37 21.95 9.1 22C7.79 22.05 6.8 20.68 5.96 19.47C4.25 16.56 2.93 11.3 4.7 7.72C5.57 5.94 7.36 4.86 9.28 4.84C10.56 4.81 11.78 5.72 12.55 5.72C13.31 5.72 14.79 4.62 16.34 4.81C17.03 4.84 18.83 5.09 19.97 6.81C19.86 6.88 17.56 8.21 17.58 11.04C17.61 14.37 20.46 15.46 20.49 15.47C20.46 15.56 20.01 17.12 18.71 19.5ZM13 3.5C13.73 2.67 14.94 2.04 15.94 2C16.07 3.17 15.6 4.35 14.9 5.19C14.21 6.04 13.07 6.7 11.95 6.61C11.8 5.46 12.36 4.26 13 3.5Z"/></svg>
+                    Download on the App Store
+                </a>
+                <span class="coming-soon">Coming soon</span>
+            </div>
+
+            <div class="phone-side">
+                <div class="phone-frame">
+                    <img src="screenshot.jpg" alt="Frinder app showing friends and landmarks on an AR radar view">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        &copy; 2025 Frinder &middot; <a href="mailto:contact@frinder.me">Contact</a>
+    </footer>
+
+    <script>
+        // Generate background stars
+        const starsEl = document.getElementById('stars');
+        for (let i = 0; i < 60; i++) {
+            const star = document.createElement('div');
+            star.className = 'star';
+            const size = Math.random() * 2 + 1;
+            star.style.width = size + 'px';
+            star.style.height = size + 'px';
+            star.style.left = Math.random() * 100 + '%';
+            star.style.top = Math.random() * 100 + '%';
+            star.style.opacity = Math.random() * 0.4 + 0.1;
+            starsEl.appendChild(star);
+        }
+    </script>
+</body>
+</html>
