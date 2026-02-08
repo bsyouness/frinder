@@ -2,6 +2,7 @@ import SwiftUI
 
 struct FriendsView: View {
     @EnvironmentObject var friendsViewModel: FriendsViewModel
+    var onNavigate: ((Friend) -> Void)? = nil
     @State private var showAddFriend = false
     @State private var friendEmail = ""
 
@@ -29,7 +30,7 @@ struct FriendsView: View {
                             .font(.subheadline)
                     } else {
                         ForEach(friendsViewModel.friends) { friend in
-                            FriendRow(friend: friend)
+                            FriendRow(friend: friend, onNavigate: onNavigate)
                                 .swipeActions(edge: .trailing) {
                                     Button(role: .destructive) {
                                         Task { await friendsViewModel.removeFriend(friend) }
@@ -83,6 +84,12 @@ struct FriendsView: View {
 
 struct FriendRow: View {
     let friend: Friend
+    var onNavigate: ((Friend) -> Void)? = nil
+
+    var isOnline: Bool {
+        guard let location = friend.location else { return false }
+        return Date().timeIntervalSince(location.timestamp) < 300
+    }
 
     private func relativeTime(_ interval: TimeInterval) -> String {
         let minutes = Int(interval / 60)
@@ -148,6 +155,12 @@ struct FriendRow: View {
             Spacer()
         }
         .padding(.vertical, 4)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            if isOnline {
+                onNavigate?(friend)
+            }
+        }
     }
 }
 

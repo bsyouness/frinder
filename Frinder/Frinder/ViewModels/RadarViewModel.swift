@@ -12,6 +12,7 @@ class RadarViewModel: ObservableObject {
     @Published var currentLocation: CLLocation?
     @Published var isLocationAuthorized = false
     @Published var locationAuthorizationStatus: CLAuthorizationStatus = .notDetermined
+    @Published var targetFriend: Friend?
 
     let landmarks = Landmark.allLandmarks
     var showLandmarks: Bool { AppSettings.shared.showLandmarks }
@@ -42,7 +43,7 @@ class RadarViewModel: ObservableObject {
         guard let userLocation = currentLocation, let R = rotationMatrix else { return [] }
         let screenSize = CGSize(width: 400, height: 800)
         let now = Date()
-        return friends.filter { friend in
+        let result = friends.filter { friend in
             guard let location = friend.location,
                   now.timeIntervalSince(location.timestamp) < 300 else { return false }
             let dir = GeoMath.directionVector(from: userLocation.coordinate, to: location.coordinate)
@@ -54,6 +55,20 @@ class RadarViewModel: ObservableObject {
                 screenSize: screenSize
             ) != nil
         }
+        // Auto-clear target if they become visible on screen
+        if let target = targetFriend, result.contains(where: { $0.id == target.id }) {
+            Task { @MainActor in self.targetFriend = nil }
+        }
+        return result
+    }
+
+    /// Compute the angle (in degrees) from screen center toward the target friend
+    func arrowAngle() -> Double? {
+        guard let target = targetFriend,
+              let location = target.location,
+              let userLocation = currentLocation else { return nil }
+        let targetBearing = GeoMath.bearing(from: userLocation.coordinate, to: location.coordinate)
+        return GeoMath.relativeBearing(targetBearing: targetBearing, deviceHeading: deviceHeading)
     }
 
     private let locationService = LocationService.shared

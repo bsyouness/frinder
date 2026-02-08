@@ -64,6 +64,17 @@ struct RadarView: View {
                     }
                 }
 
+                // Navigation arrow overlay
+                if radarViewModel.targetFriend != nil,
+                   !radarViewModel.visibleFriends.contains(where: { $0.id == radarViewModel.targetFriend?.id }) {
+                    NavigationArrowView(
+                        friendName: radarViewModel.targetFriend?.displayName ?? "",
+                        angle: radarViewModel.arrowAngle() ?? 0
+                    ) {
+                        radarViewModel.targetFriend = nil
+                    }
+                }
+
                 // Compass indicator at top
                 VStack {
                     CompassIndicator(heading: radarViewModel.deviceHeading)
@@ -467,6 +478,39 @@ struct LocationDeniedView: View {
             .foregroundStyle(.white)
             .cornerRadius(10)
         }
+    }
+}
+
+struct NavigationArrowView: View {
+    let friendName: String
+    let angle: Double
+    let onDismiss: () -> Void
+
+    var body: some View {
+        VStack(spacing: 8) {
+            Image(systemName: "location.north.fill")
+                .font(.system(size: 40))
+                .foregroundStyle(.blue)
+                .rotationEffect(.degrees(angle))
+
+            Text(friendName)
+                .font(.caption)
+                .fontWeight(.semibold)
+                .foregroundStyle(.white)
+
+            Button {
+                onDismiss()
+            } label: {
+                Text("Dismiss")
+                    .font(.caption2)
+                    .foregroundStyle(.white.opacity(0.7))
+            }
+        }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(.black.opacity(0.6))
+        )
     }
 }
 
