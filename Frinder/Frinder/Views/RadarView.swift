@@ -25,7 +25,8 @@ struct RadarView: View {
                     EarthView(
                         horizonPoints: radarViewModel.horizonPoints(in: geometry.size),
                         earthFillPath: radarViewModel.earthFillPath(in: geometry.size),
-                        continents: radarViewModel.projectedContinents(in: geometry.size)
+                        isDaytime: radarViewModel.isDaytime,
+                        screenSize: geometry.size
                     )
 
                     // Landmark dots (shown behind friends) - clustered when overlapping
@@ -264,24 +265,64 @@ struct LandmarkClusterView: View {
 struct EarthView: View {
     let horizonPoints: [CGPoint]
     let earthFillPath: Path
-    let continents: [ProjectedContinent]
+    let isDaytime: Bool
+    let screenSize: CGSize
+
+    /// Fixed star positions generated with a seeded RNG (normalized 0..1 coordinates)
+    private static let stars: [(x: Double, y: Double, radius: Double, opacity: Double)] = {
+        var rng = SeededRandomNumberGenerator(seed: 42)
+        return (0..<80).map { _ in
+            (
+                x: Double.random(in: 0...1, using: &rng),
+                y: Double.random(in: 0...1, using: &rng),
+                radius: Double.random(in: 1...2, using: &rng),
+                opacity: Double.random(in: 0.3...0.6, using: &rng)
+            )
+        }
+    }()
 
     var body: some View {
         Canvas { context, size in
-            // Earth fill below horizon
-            context.fill(earthFillPath, with: .color(.teal.opacity(0.08)))
-
-            // Continent shapes
-            for continent in continents {
-                guard continent.points.count >= 3 else { continue }
-                var path = Path()
-                path.move(to: continent.points[0])
-                for pt in continent.points.dropFirst() {
-                    path.addLine(to: pt)
+            // Sky fill above horizon (day only)
+            if isDaytime && horizonPoints.count >= 2 {
+                let sorted = horizonPoints.sorted { $0.x < $1.x }
+                var skyPath = Path()
+                skyPath.move(to: CGPoint(x: 0, y: 0))
+                skyPath.addLine(to: CGPoint(x: size.width, y: 0))
+                skyPath.addLine(to: CGPoint(x: sorted.last!.x, y: sorted.last!.y))
+                for pt in sorted.reversed().dropFirst() {
+                    skyPath.addLine(to: pt)
                 }
-                path.closeSubpath()
-                context.fill(path, with: .color(.white.opacity(0.1)))
+                skyPath.addLine(to: CGPoint(x: 0, y: 0))
+                skyPath.closeSubpath()
+                context.fill(skyPath, with: .color(.blue.opacity(0.15)))
             }
+
+            // Stars (night only)
+            if !isDaytime && horizonPoints.count >= 2 {
+                let sorted = horizonPoints.sorted { $0.x < $1.x }
+                let avgHorizonY = sorted.map(\.y).reduce(0, +) / Double(sorted.count)
+
+                for star in Self.stars {
+                    let sx = star.x * size.width
+                    let sy = star.y * size.height
+                    // Only draw stars above horizon (approximate)
+                    guard sy < avgHorizonY else { continue }
+                    let rect = CGRect(
+                        x: sx - star.radius,
+                        y: sy - star.radius,
+                        width: star.radius * 2,
+                        height: star.radius * 2
+                    )
+                    context.fill(
+                        Path(ellipseIn: rect),
+                        with: .color(.white.opacity(star.opacity))
+                    )
+                }
+            }
+
+            // Green ground fill below horizon
+            context.fill(earthFillPath, with: .color(.green.opacity(0.08)))
 
             // Horizon stroke line
             if horizonPoints.count >= 2 {
@@ -294,6 +335,23 @@ struct EarthView: View {
                 context.stroke(line, with: .color(.white.opacity(0.3)), lineWidth: 1)
             }
         }
+    }
+}
+
+/// Simple seeded random number generator for deterministic star positions
+struct SeededRandomNumberGenerator: RandomNumberGenerator {
+    private var state: UInt64
+
+    init(seed: UInt64) {
+        state = seed
+    }
+
+    mutating func next() -> UInt64 {
+        // xorshift64
+        state ^= state << 13
+        state ^= state >> 7
+        state ^= state << 17
+        return state
     }
 }
 

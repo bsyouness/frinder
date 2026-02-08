@@ -24,8 +24,8 @@ class LocationService: NSObject, ObservableObject {
     override init() {
         super.init()
         locationManager.delegate = self
-        locationManager.desiredAccuracy = kCLLocationAccuracyHundredMeters // Approximate location
-        locationManager.distanceFilter = 50 // Update every 50 meters
+        locationManager.desiredAccuracy = kCLLocationAccuracyBest
+        locationManager.distanceFilter = kCLDistanceFilterNone
         authorizationStatus = locationManager.authorizationStatus
     }
 

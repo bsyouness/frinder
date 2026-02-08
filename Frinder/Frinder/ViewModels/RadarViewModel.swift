@@ -189,21 +189,10 @@ class RadarViewModel: ObservableObject {
         )
     }
 
-    /// Project continent polygons to screen coordinates
-    func projectedContinents(in size: CGSize) -> [ProjectedContinent] {
-        guard let userLocation = currentLocation, let R = rotationMatrix else { return [] }
-        return ContinentData.continents.compactMap { continent -> ProjectedContinent? in
-            let points = GeoMath.projectPolygon(
-                from: userLocation.coordinate,
-                coordinates: continent.coordinates,
-                rotationMatrix: R,
-                horizontalFOV: horizontalFOV,
-                verticalFOV: verticalFOV,
-                screenSize: size
-            )
-            guard points.count >= 3 else { return nil }
-            return ProjectedContinent(name: continent.name, points: points)
-        }
+    /// Whether it's currently daytime (civil twilight approximation: 6 AM – 8 PM)
+    var isDaytime: Bool {
+        let hour = Calendar.current.component(.hour, from: Date())
+        return hour >= 6 && hour < 20
     }
 
     /// Build a path for the earth fill below the horizon
@@ -287,8 +276,3 @@ struct LandmarkCluster: Identifiable {
     var first: Landmark? { landmarks.first }
 }
 
-/// A continent polygon projected to screen coordinates
-struct ProjectedContinent {
-    let name: String
-    let points: [CGPoint]
-}
