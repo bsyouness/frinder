@@ -37,13 +37,15 @@ class RadarViewModel: ObservableObject {
         }
     }
 
-    /// Get friends that are within the current field of view
+    /// Get friends that are within the current field of view (excludes stale >5min)
     var visibleFriends: [Friend] {
         guard let userLocation = currentLocation, let R = rotationMatrix else { return [] }
         let screenSize = CGSize(width: 400, height: 800)
+        let now = Date()
         return friends.filter { friend in
-            guard let coord = friend.location?.coordinate else { return false }
-            let dir = GeoMath.directionVector(from: userLocation.coordinate, to: coord)
+            guard let location = friend.location,
+                  now.timeIntervalSince(location.timestamp) < 300 else { return false }
+            let dir = GeoMath.directionVector(from: userLocation.coordinate, to: location.coordinate)
             return GeoMath.projectToScreen(
                 worldDirection: dir,
                 rotationMatrix: R,

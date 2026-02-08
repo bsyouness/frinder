@@ -84,6 +84,15 @@ struct FriendsView: View {
 struct FriendRow: View {
     let friend: Friend
 
+    private func relativeTime(_ interval: TimeInterval) -> String {
+        let minutes = Int(interval / 60)
+        if minutes < 60 { return "\(minutes)m ago" }
+        let hours = minutes / 60
+        if hours < 24 { return "\(hours)h ago" }
+        let days = hours / 24
+        return "\(days)d ago"
+    }
+
     var body: some View {
         HStack(spacing: 12) {
             // Avatar
@@ -118,10 +127,17 @@ struct FriendRow: View {
                 Text(friend.displayName)
                     .font(.body)
 
-                if friend.location != nil {
-                    Text("Online")
-                        .font(.caption)
-                        .foregroundStyle(.green)
+                if let location = friend.location {
+                    let age = Date().timeIntervalSince(location.timestamp)
+                    if age < 300 {
+                        Text("Online")
+                            .font(.caption)
+                            .foregroundStyle(.green)
+                    } else {
+                        Text("Last seen \(relativeTime(age))")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                 } else {
                     Text("Offline")
                         .font(.caption)

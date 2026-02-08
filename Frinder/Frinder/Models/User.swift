@@ -39,4 +39,10 @@ struct UserLocation: Codable, Equatable {
         self.longitude = coordinate.longitude
         self.timestamp = Date()
     }
+
+    init(latitude: Double, longitude: Double, timestamp: Date) {
+        self.latitude = latitude
+        self.longitude = longitude
+        self.timestamp = timestamp
+    }
 }

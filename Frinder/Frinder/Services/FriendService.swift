@@ -191,9 +191,9 @@ class FriendService: ObservableObject {
                     if let locationData = data["location"] as? [String: Any],
                        let lat = locationData["latitude"] as? Double,
                        let lon = locationData["longitude"] as? Double,
-                       locationData["timestamp"] is Timestamp {
+                       let ts = locationData["timestamp"] as? Timestamp {
                         location = UserLocation(
-                            coordinate: .init(latitude: lat, longitude: lon)
+                            latitude: lat, longitude: lon, timestamp: ts.dateValue()
                         )
                     }
 
