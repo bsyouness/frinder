@@ -15,7 +15,7 @@ class RadarViewModel: ObservableObject {
     @Published var targetFriend: Friend?
 
     let landmarks = Landmark.allLandmarks
-    var showLandmarks: Bool { AppSettings.shared.showLandmarks }
+    var showLandmarks: Bool { AppSettings.shared.disabledLandmarkIds.count < Landmark.allLandmarks.count }
 
     /// Horizontal field of view in degrees (total angle visible on screen width)
     private let horizontalFOV: Double = 60.0
@@ -26,7 +26,9 @@ class RadarViewModel: ObservableObject {
     var visibleLandmarks: [Landmark] {
         guard let userLocation = currentLocation, let R = rotationMatrix else { return [] }
         let screenSize = CGSize(width: 400, height: 800) // reference size for visibility check
+        let settings = AppSettings.shared
         return landmarks.filter { landmark in
+            guard settings.isLandmarkEnabled(landmark.id) else { return false }
             let dir = GeoMath.directionVector(from: userLocation.coordinate, to: landmark.coordinate)
             return GeoMath.projectToScreen(
                 worldDirection: dir,
@@ -247,65 +249,94 @@ class RadarViewModel: ObservableObject {
         }
     }
 
-    /// Cluster overlapping landmarks based on screen positions, hiding any that overlap with friends
+    /// Cluster overlapping landmarks based on screen positions, merging nearby friends into mixed clusters
     func clusterLandmarks(in size: CGSize, threshold: CGFloat = 60) -> [LandmarkCluster] {
-        let friendPositions = visibleFriends.map { friendPosition(for: $0, in: size) }
-
-        // Filter out landmarks that overlap with any friend
-        let visible = visibleLandmarks.filter { landmark in
-            let pos = landmarkPosition(for: landmark, in: size)
-            return !friendPositions.contains { friendPos in
-                hypot(pos.x - friendPos.x, pos.y - friendPos.y) < threshold
-            }
-        }
+        let visible = visibleLandmarks
         guard !visible.isEmpty else { return [] }
 
+        let friendsWithPositions = visibleFriends.map { ($0, friendPosition(for: $0, in: size)) }
+
         var clusters: [LandmarkCluster] = []
-        var assigned = Set<String>()
+        var assignedLandmarks = Set<String>()
+        var assignedFriends = Set<String>()
 
         for landmark in visible {
-            if assigned.contains(landmark.id) { continue }
+            if assignedLandmarks.contains(landmark.id) { continue }
 
             let position = landmarkPosition(for: landmark, in: size)
-            var clusterLandmarks = [landmark]
-            assigned.insert(landmark.id)
+            var clusterLandmarkList = [landmark]
+            assignedLandmarks.insert(landmark.id)
 
             // Find other landmarks that overlap with this one
             for other in visible {
-                if assigned.contains(other.id) { continue }
+                if assignedLandmarks.contains(other.id) { continue }
                 let otherPosition = landmarkPosition(for: other, in: size)
                 let distance = hypot(position.x - otherPosition.x, position.y - otherPosition.y)
                 if distance < threshold {
-                    clusterLandmarks.append(other)
-                    assigned.insert(other.id)
+                    clusterLandmarkList.append(other)
+                    assignedLandmarks.insert(other.id)
+                }
+            }
+
+            // Find friends that overlap with this cluster
+            var clusterFriends: [Friend] = []
+            for (friend, friendPos) in friendsWithPositions {
+                if assignedFriends.contains(friend.id) { continue }
+                let distance = hypot(position.x - friendPos.x, position.y - friendPos.y)
+                if distance < threshold {
+                    clusterFriends.append(friend)
+                    assignedFriends.insert(friend.id)
                 }
             }
 
             // Sort landmarks in cluster by distance
             if let userLocation = currentLocation {
-                clusterLandmarks.sort { l1, l2 in
+                clusterLandmarkList.sort { l1, l2 in
                     l1.distance(from: userLocation.coordinate) < l2.distance(from: userLocation.coordinate)
                 }
             }
 
-            clusters.append(LandmarkCluster(landmarks: clusterLandmarks, position: position))
+            clusters.append(LandmarkCluster(landmarks: clusterLandmarkList, position: position, friends: clusterFriends))
         }
 
         return clusters
     }
+
+    /// Set of friend IDs that are part of mixed clusters (used to skip individual rendering)
+    func friendsInClusters(in size: CGSize) -> Set<String> {
+        let clusters = clusterLandmarks(in: size)
+        var ids = Set<String>()
+        for cluster in clusters {
+            for friend in cluster.friends {
+                ids.insert(friend.id)
+            }
+        }
+        return ids
+    }
 }
 
-/// Represents a cluster of landmarks at a position
+/// Represents a cluster of landmarks (and optionally friends) at a position
 struct LandmarkCluster: Identifiable {
     let landmarks: [Landmark]
+    var friends: [Friend]
     let position: CGPoint
+
+    init(landmarks: [Landmark], position: CGPoint, friends: [Friend] = []) {
+        self.landmarks = landmarks
+        self.friends = friends
+        self.position = position
+    }
 
     /// Stable ID based on landmark IDs so SwiftUI preserves state across updates
     var id: String {
-        landmarks.map { $0.id }.sorted().joined(separator: "-")
+        let landmarkIds = landmarks.map { $0.id }.sorted().joined(separator: "-")
+        let friendIds = friends.map { $0.id }.sorted().joined(separator: "-")
+        return landmarkIds + (friendIds.isEmpty ? "" : "+" + friendIds)
     }
 
-    var isSingle: Bool { landmarks.count == 1 }
+    var isSingle: Bool { landmarks.count == 1 && friends.isEmpty }
     var first: Landmark? { landmarks.first }
+    var isMixed: Bool { !friends.isEmpty }
+    var totalCount: Int { landmarks.count + friends.count }
 }
 

@@ -5,6 +5,7 @@ import CoreMotion
 struct RadarView: View {
     @EnvironmentObject var radarViewModel: RadarViewModel
     @ObservedObject var settings = AppSettings.shared
+    @State private var expandedClusterId: String?
 
     var body: some View {
         GeometryReader { geometry in
@@ -34,6 +35,8 @@ struct RadarView: View {
                     // Landmark dots (shown behind friends) - clustered when overlapping
                     if radarViewModel.showLandmarks {
                         let clusters = radarViewModel.clusterLandmarks(in: geometry.size)
+                        let clusteredFriendIds = clusters.flatMap { $0.friends.map(\.id) }
+
                         ForEach(clusters) { cluster in
                             if cluster.isSingle, let landmark = cluster.first {
                                 LandmarkDotView(
@@ -45,24 +48,52 @@ struct RadarView: View {
                                 LandmarkClusterView(
                                     cluster: cluster,
                                     getDistance: { radarViewModel.landmarkDistance(for: $0) },
-                                    screenSize: geometry.size
+                                    getFriendDistance: { friend in
+                                        guard let userLocation = radarViewModel.currentLocation,
+                                              let distance = friend.distance(from: userLocation) else { return nil }
+                                        return settings.distanceUnit.format(meters: distance)
+                                    },
+                                    screenSize: geometry.size,
+                                    expandedClusterId: $expandedClusterId
                                 )
                             }
                         }
-                    }
 
-                    // Friend dots - only visible ones
-                    ForEach(radarViewModel.visibleFriends) { friend in
-                        FriendDotView(
-                            friend: friend,
-                            userLocation: radarViewModel.currentLocation,
-                            position: radarViewModel.friendPosition(for: friend, in: geometry.size)
-                        )
+                        // Friend dots - skip friends that are part of mixed clusters
+                        ForEach(radarViewModel.visibleFriends) { friend in
+                            if !clusteredFriendIds.contains(friend.id) {
+                                FriendDotView(
+                                    friend: friend,
+                                    userLocation: radarViewModel.currentLocation,
+                                    position: radarViewModel.friendPosition(for: friend, in: geometry.size)
+                                )
+                            }
+                        }
+                    } else {
+                        // Friend dots - all visible when landmarks are off
+                        ForEach(radarViewModel.visibleFriends) { friend in
+                            FriendDotView(
+                                friend: friend,
+                                userLocation: radarViewModel.currentLocation,
+                                position: radarViewModel.friendPosition(for: friend, in: geometry.size)
+                            )
+                        }
                     }
 
                     // Empty state only if no friends AND landmarks are hidden
                     if radarViewModel.friends.isEmpty && !radarViewModel.showLandmarks {
                         EmptyStateView()
+                    }
+
+                    // Tap-away overlay to dismiss expanded clusters
+                    if expandedClusterId != nil {
+                        Color.clear
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                withAnimation(.easeInOut(duration: 0.2)) {
+                                    expandedClusterId = nil
+                                }
+                            }
                     }
                 }
 
@@ -211,10 +242,10 @@ struct LandmarkDotView: View {
                     .foregroundStyle(.white.opacity(0.6))
             }
         }
-        .padding(.horizontal, 4)
-        .padding(.vertical, 2)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
         .background(
-            RoundedRectangle(cornerRadius: 6)
+            Capsule()
                 .fill(.black.opacity(0.4))
         )
         .position(position)
@@ -226,9 +257,11 @@ struct LandmarkDotView: View {
 struct LandmarkClusterView: View {
     let cluster: LandmarkCluster
     let getDistance: (Landmark) -> String?
+    let getFriendDistance: (Friend) -> String?
     let screenSize: CGSize
-    @State private var isExpanded = false
-    @State private var wasOffScreen = false
+    @Binding var expandedClusterId: String?
+
+    private var isExpanded: Bool { expandedClusterId == cluster.id }
 
     private var isOffScreen: Bool {
         let margin: CGFloat = 50
@@ -241,50 +274,92 @@ struct LandmarkClusterView: View {
     var body: some View {
         VStack(spacing: 2) {
             if isExpanded && !isOffScreen {
-                // Expanded list of landmarks
-                VStack(alignment: .leading, spacing: 4) {
-                    ForEach(cluster.landmarks) { landmark in
-                        HStack(spacing: 6) {
-                            Text(landmark.icon)
-                                .font(.system(size: 16))
-                            VStack(alignment: .leading, spacing: 1) {
-                                Text(landmark.name)
-                                    .font(.system(size: 9, weight: .medium))
-                                    .foregroundStyle(.white.opacity(0.9))
-                                    .lineLimit(1)
-                                if let distance = getDistance(landmark) {
-                                    Text(distance)
-                                        .font(.system(size: 8))
-                                        .foregroundStyle(.white.opacity(0.6))
+                // Expanded list of friends + landmarks
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 4) {
+                        // Friends first (blue accent)
+                        ForEach(cluster.friends) { friend in
+                            HStack(spacing: 6) {
+                                Circle()
+                                    .fill(.blue)
+                                    .frame(width: 16, height: 16)
+                                    .overlay(
+                                        Image(systemName: "person.fill")
+                                            .font(.system(size: 8))
+                                            .foregroundStyle(.white)
+                                    )
+                                VStack(alignment: .leading, spacing: 1) {
+                                    Text(friend.displayName)
+                                        .font(.system(size: 9, weight: .medium))
+                                        .foregroundStyle(.blue)
+                                        .lineLimit(1)
+                                    if let distance = getFriendDistance(friend) {
+                                        Text(distance)
+                                            .font(.system(size: 8))
+                                            .foregroundStyle(.white.opacity(0.6))
+                                    }
                                 }
+                                Spacer()
                             }
-                            Spacer()
+                        }
+
+                        // Landmarks (red accent)
+                        ForEach(cluster.landmarks) { landmark in
+                            HStack(spacing: 6) {
+                                Text(landmark.icon)
+                                    .font(.system(size: 16))
+                                VStack(alignment: .leading, spacing: 1) {
+                                    Text(landmark.name)
+                                        .font(.system(size: 9, weight: .medium))
+                                        .foregroundStyle(.white.opacity(0.9))
+                                        .lineLimit(1)
+                                    if let distance = getDistance(landmark) {
+                                        Text(distance)
+                                            .font(.system(size: 8))
+                                            .foregroundStyle(.white.opacity(0.6))
+                                    }
+                                }
+                                Spacer()
+                            }
                         }
                     }
                 }
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxHeight: 400)
                 .padding(8)
                 .background(
-                    RoundedRectangle(cornerRadius: 8)
+                    RoundedRectangle(cornerRadius: 20)
                         .fill(.black.opacity(0.8))
                 )
-                .frame(width: 140)
+                .frame(width: 160)
             } else {
-                // Collapsed cluster icon
+                // Collapsed cluster icon with badges
                 ZStack {
                     Image(systemName: "list.bullet")
                         .font(.system(size: 20))
                         .foregroundStyle(.white)
 
+                    // Friend count badge (blue)
+                    if !cluster.friends.isEmpty {
+                        Text("\(cluster.friends.count)")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundStyle(.white)
+                            .padding(4)
+                            .background(Circle().fill(.blue))
+                            .offset(x: -12, y: -12)
+                    }
+
+                    // Landmark count badge (red)
                     Text("\(cluster.landmarks.count)")
                         .font(.system(size: 10, weight: .bold))
                         .foregroundStyle(.white)
                         .padding(4)
-                        .background(Circle().fill(.blue))
+                        .background(Circle().fill(.red))
                         .offset(x: 12, y: -12)
                 }
                 .padding(8)
                 .background(
-                    RoundedRectangle(cornerRadius: 8)
+                    Capsule()
                         .fill(.black.opacity(0.6))
                 )
             }
@@ -292,15 +367,13 @@ struct LandmarkClusterView: View {
         .onTapGesture {
             if !isOffScreen {
                 withAnimation(.easeInOut(duration: 0.2)) {
-                    isExpanded = true
+                    expandedClusterId = cluster.id
                 }
             }
         }
         .onChange(of: isOffScreen) { _, offScreen in
-            if offScreen {
-                // Collapse when going off screen
-                isExpanded = false
-                wasOffScreen = true
+            if offScreen && isExpanded {
+                expandedClusterId = nil
             }
         }
         .position(cluster.position)
@@ -342,7 +415,7 @@ struct EarthView: View {
     /// Fixed cloud world directions + visual properties (45 clouds, upper hemisphere)
     private static let clouds: [(dir: (x: Double, y: Double, z: Double), imageIndex: Int, scale: Double, opacity: Double)] = {
         var rng = SeededRandomNumberGenerator(seed: 99)
-        return (0..<45).map { _ in
+        return (0..<20).map { _ in
             let az = Double.random(in: 0...(2 * .pi), using: &rng)
             let el = Double.random(in: 0.1...1.3, using: &rng)
             let cosE = cos(el)
@@ -463,11 +536,6 @@ struct EarthView: View {
                         verticalFOV: Self.verticalFOV,
                         screenSize: size
                     ) else { continue }
-                    // Skip clouds that overlap with the sun
-                    if let sp = sunPosition {
-                        let dist = hypot(pt.x - sp.x, pt.y - sp.y)
-                        if dist < 120 { continue }
-                    }
                     let img = resolvedClouds[cloud.imageIndex]
                     let w = img.size.width * cloud.scale * 3
                     let h = img.size.height * cloud.scale * 3

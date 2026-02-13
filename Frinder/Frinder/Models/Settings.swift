@@ -44,6 +44,24 @@ class AppSettings: ObservableObject {
         }
     }
 
+    @Published var disabledLandmarkIds: Set<String> {
+        didSet {
+            UserDefaults.standard.set(Array(disabledLandmarkIds), forKey: "disabledLandmarkIds")
+        }
+    }
+
+    func isLandmarkEnabled(_ id: String) -> Bool {
+        !disabledLandmarkIds.contains(id)
+    }
+
+    func toggleLandmark(_ id: String) {
+        if disabledLandmarkIds.contains(id) {
+            disabledLandmarkIds.remove(id)
+        } else {
+            disabledLandmarkIds.insert(id)
+        }
+    }
+
     static let shared = AppSettings()
 
     private init() {
@@ -56,5 +74,11 @@ class AppSettings: ObservableObject {
 
         // Default to showing landmarks
         self.showLandmarks = UserDefaults.standard.object(forKey: "showLandmarks") as? Bool ?? true
+
+        if let savedIds = UserDefaults.standard.stringArray(forKey: "disabledLandmarkIds") {
+            self.disabledLandmarkIds = Set(savedIds)
+        } else {
+            self.disabledLandmarkIds = []
+        }
     }
 }

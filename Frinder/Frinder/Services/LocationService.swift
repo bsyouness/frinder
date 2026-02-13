@@ -26,11 +26,12 @@ class LocationService: NSObject, ObservableObject {
         locationManager.delegate = self
         locationManager.desiredAccuracy = kCLLocationAccuracyBest
         locationManager.distanceFilter = kCLDistanceFilterNone
+        locationManager.allowsBackgroundLocationUpdates = true
         authorizationStatus = locationManager.authorizationStatus
     }
 
     func requestAuthorization() {
-        locationManager.requestWhenInUseAuthorization()
+        locationManager.requestAlwaysAuthorization()
     }
 
     func startUpdatingLocation() {

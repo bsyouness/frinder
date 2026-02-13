@@ -61,19 +61,23 @@ struct SettingsView: View {
                         }
                     }
 
-                    Toggle("Show Landmarks", isOn: $settings.showLandmarks)
                 }
 
-                // Landmarks info section
+                // Landmarks section
                 Section {
-                    HStack {
-                        Text("Landmarks")
-                        Spacer()
-                        Text("\(Landmark.allLandmarks.count) worldwide")
-                            .foregroundStyle(.secondary)
+                    NavigationLink {
+                        LandmarkListView()
+                    } label: {
+                        HStack {
+                            Text("Landmarks")
+                            Spacer()
+                            let enabled = Landmark.allLandmarks.count - settings.disabledLandmarkIds.count
+                            Text("\(enabled)/\(Landmark.allLandmarks.count)")
+                                .foregroundStyle(.secondary)
+                        }
                     }
                 } footer: {
-                    Text("See famous landmarks like the Eiffel Tower, Statue of Liberty, and more on your radar.")
+                    Text("Choose which landmarks appear on your radar.")
                 }
 
                 // About section
@@ -85,7 +89,7 @@ struct SettingsView: View {
                             .foregroundStyle(.secondary)
                     }
 
-                    Link(destination: URL(string: "https://example.com/privacy")!) {
+                    Link(destination: URL(string: "https://frinder.me/privacy.html")!) {
                         HStack {
                             Text("Privacy Policy")
                             Spacer()
@@ -96,7 +100,7 @@ struct SettingsView: View {
                     }
                     .foregroundStyle(.primary)
 
-                    Link(destination: URL(string: "https://example.com/terms")!) {
+                    Link(destination: URL(string: "https://frinder.me/terms.html")!) {
                         HStack {
                             Text("Terms of Service")
                             Spacer()
@@ -123,6 +127,45 @@ struct SettingsView: View {
             }
             .navigationTitle("Settings")
         }
+    }
+}
+
+struct LandmarkListView: View {
+    @ObservedObject var settings = AppSettings.shared
+
+    var body: some View {
+        List {
+            Section {
+                Toggle("Show Landmarks", isOn: Binding(
+                    get: { settings.disabledLandmarkIds.isEmpty },
+                    set: { newValue in
+                        if newValue {
+                            settings.disabledLandmarkIds.removeAll()
+                        } else {
+                            settings.disabledLandmarkIds = Set(Landmark.allLandmarks.map(\.id))
+                        }
+                    }
+                ))
+            }
+
+            Section {
+                ForEach(Landmark.allLandmarks.sorted { $0.name < $1.name }) { landmark in
+                    HStack(spacing: 12) {
+                        Text(landmark.icon)
+                            .font(.title2)
+                        Text(landmark.name)
+                            .font(.body)
+                        Spacer()
+                        Toggle("", isOn: Binding(
+                            get: { settings.isLandmarkEnabled(landmark.id) },
+                            set: { _ in settings.toggleLandmark(landmark.id) }
+                        ))
+                        .labelsHidden()
+                    }
+                }
+            }
+        }
+        .navigationTitle("Landmarks")
     }
 }
 
