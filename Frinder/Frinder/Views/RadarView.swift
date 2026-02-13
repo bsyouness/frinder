@@ -1,5 +1,6 @@
 import SwiftUI
 import CoreLocation
+import CoreMotion
 
 struct RadarView: View {
     @EnvironmentObject var radarViewModel: RadarViewModel
@@ -8,8 +9,8 @@ struct RadarView: View {
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                // Background
-                Color.black
+                // Background: sky color (day) or black (night)
+                (radarViewModel.isDaytime ? Color(red: 0.55, green: 0.75, blue: 0.95) : Color.black)
                     .ignoresSafeArea()
 
                 if !radarViewModel.isLocationAuthorized {
@@ -24,9 +25,10 @@ struct RadarView: View {
                     // Earth visualization with horizon
                     EarthView(
                         horizonPoints: radarViewModel.horizonPoints(in: geometry.size),
-                        earthFillPath: radarViewModel.earthFillPath(in: geometry.size),
                         isDaytime: radarViewModel.isDaytime,
-                        screenSize: geometry.size
+                        screenSize: geometry.size,
+                        sunPosition: radarViewModel.sunScreenPosition(in: geometry.size),
+                        rotationMatrix: radarViewModel.rotationMatrix
                     )
 
                     // Landmark dots (shown behind friends) - clustered when overlapping
@@ -309,65 +311,173 @@ struct LandmarkClusterView: View {
 
 struct EarthView: View {
     let horizonPoints: [CGPoint]
-    let earthFillPath: Path
     let isDaytime: Bool
     let screenSize: CGSize
+    var sunPosition: CGPoint? = nil
+    var rotationMatrix: CMRotationMatrix? = nil
 
-    /// Fixed star positions generated with a seeded RNG (normalized 0..1 coordinates)
-    private static let stars: [(x: Double, y: Double, radius: Double, opacity: Double)] = {
+    private static let horizontalFOV: Double = 60.0
+    private static let verticalFOV: Double = 90.0
+
+    private static let starImageNames = ["star1", "star2", "star3", "star4", "star5"]
+    private static let cloudImageNames = ["cloud1", "cloud2", "cloud3", "cloud4", "cloud5"]
+
+    /// Fixed star world directions + visual properties
+    private static let stars: [(dir: (x: Double, y: Double, z: Double), imageIndex: Int, scale: Double, opacity: Double)] = {
         var rng = SeededRandomNumberGenerator(seed: 42)
         return (0..<80).map { _ in
-            (
-                x: Double.random(in: 0...1, using: &rng),
-                y: Double.random(in: 0...1, using: &rng),
-                radius: Double.random(in: 1...2, using: &rng),
-                opacity: Double.random(in: 0.3...0.6, using: &rng)
+            let az = Double.random(in: 0...(2 * .pi), using: &rng)
+            let el = Double.random(in: 0.1...1.2, using: &rng)
+            let cosE = cos(el)
+            let dir = (x: cosE * cos(az), y: -cosE * sin(az), z: sin(el))
+            return (
+                dir: dir,
+                imageIndex: Int.random(in: 0..<5, using: &rng),
+                scale: Double.random(in: 0.04...0.08, using: &rng),
+                opacity: Double.random(in: 0.5...0.9, using: &rng)
             )
         }
     }()
 
+    /// Fixed cloud world directions + visual properties (45 clouds, upper hemisphere)
+    private static let clouds: [(dir: (x: Double, y: Double, z: Double), imageIndex: Int, scale: Double, opacity: Double)] = {
+        var rng = SeededRandomNumberGenerator(seed: 99)
+        return (0..<45).map { _ in
+            let az = Double.random(in: 0...(2 * .pi), using: &rng)
+            let el = Double.random(in: 0.1...1.3, using: &rng)
+            let cosE = cos(el)
+            let dir = (x: cosE * cos(az), y: -cosE * sin(az), z: sin(el))
+            return (
+                dir: dir,
+                imageIndex: Int.random(in: 0..<5, using: &rng),
+                scale: Double.random(in: 0.08...0.16, using: &rng),
+                opacity: 1.0
+            )
+        }
+    }()
+
+    /// Device roll angle from the rotation matrix (0 when upright)
+    private static func deviceRoll(from R: CMRotationMatrix) -> Double {
+        // Gravity in world NWU is (0, 0, -1). Transform to device frame:
+        let gx = -R.m13
+        let gy = -R.m23
+        return atan2(gx, -gy)
+    }
+
     var body: some View {
         Canvas { context, size in
-            // Sky fill above horizon (day only)
-            if isDaytime && horizonPoints.count >= 2 {
-                let sorted = horizonPoints.sorted { $0.x < $1.x }
-                var skyPath = Path()
-                skyPath.move(to: CGPoint(x: 0, y: 0))
-                skyPath.addLine(to: CGPoint(x: size.width, y: 0))
-                skyPath.addLine(to: CGPoint(x: sorted.last!.x, y: sorted.last!.y))
-                for pt in sorted.reversed().dropFirst() {
-                    skyPath.addLine(to: pt)
+            // Earth fill (#32a852) — determine earth region by projecting
+            // a point just below the horizon and checking which screen half it lands in
+            let earthColor = Color(red: 50.0/255, green: 168.0/255, blue: 82.0/255).opacity(0.25)
+
+            if let R = rotationMatrix {
+                // Project nadir (straight down, 0,0,-1) to find which screen region is earth
+                let nadirDz = R.m31 * 0 + R.m32 * 0 + R.m33 * (-1)
+                let nadirVisible = nadirDz < 0
+
+                if horizonPoints.count >= 10 {
+                    // Enough horizon points for a reliable path
+                    let sorted = horizonPoints.sorted { $0.x < $1.x }
+                    let avgHorizonY = sorted.map(\.y).reduce(0, +) / CGFloat(sorted.count)
+
+                    // Determine if earth is below or above the horizon on screen
+                    // by checking where the nadir projects relative to the horizon
+                    let earthBelow: Bool
+                    if nadirVisible {
+                        let nadirDx = R.m11 * 0 + R.m12 * 0 + R.m13 * (-1)
+                        let nadirDy = R.m21 * 0 + R.m22 * 0 + R.m23 * (-1)
+                        let nadirAngleY = atan2(nadirDy, -nadirDz)
+                        let vFOVRad = Self.verticalFOV.toRadians()
+                        let nadirPy = size.height / 2 - CGFloat(nadirAngleY / (vFOVRad / 2)) * size.height / 2
+                        earthBelow = nadirPy > avgHorizonY
+                    } else {
+                        // Nadir not visible — earth is on the far side (behind device)
+                        // Check: if looking up, earth is below horizon on screen
+                        earthBelow = R.m33 < 0  // device z-axis z-component < 0 means looking up
+                    }
+
+                    var earthPath = Path()
+                    if earthBelow {
+                        earthPath.move(to: CGPoint(x: 0, y: size.height))
+                        earthPath.addLine(to: CGPoint(x: sorted.first!.x, y: sorted.first!.y))
+                        for pt in sorted.dropFirst() { earthPath.addLine(to: pt) }
+                        earthPath.addLine(to: CGPoint(x: size.width, y: size.height))
+                    } else {
+                        earthPath.move(to: CGPoint(x: 0, y: 0))
+                        earthPath.addLine(to: CGPoint(x: sorted.first!.x, y: sorted.first!.y))
+                        for pt in sorted.dropFirst() { earthPath.addLine(to: pt) }
+                        earthPath.addLine(to: CGPoint(x: size.width, y: 0))
+                    }
+                    earthPath.closeSubpath()
+                    context.fill(earthPath, with: .color(earthColor))
+                } else {
+                    // No reliable horizon — fill entire screen if looking at ground
+                    // Nadir visible means we can see the ground
+                    if nadirVisible {
+                        context.fill(Path(CGRect(origin: .zero, size: size)), with: .color(earthColor))
+                    }
                 }
-                skyPath.addLine(to: CGPoint(x: 0, y: 0))
-                skyPath.closeSubpath()
-                context.fill(skyPath, with: .color(.blue.opacity(0.15)))
             }
 
-            // Stars (night only)
-            if !isDaytime && horizonPoints.count >= 2 {
-                let sorted = horizonPoints.sorted { $0.x < $1.x }
-                let avgHorizonY = sorted.map(\.y).reduce(0, +) / Double(sorted.count)
-
+            // Stars (night only, world-projected)
+            if !isDaytime, let R = rotationMatrix {
+                let resolvedStars = Self.starImageNames.map { context.resolve(Image($0)) }
                 for star in Self.stars {
-                    let sx = star.x * size.width
-                    let sy = star.y * size.height
-                    // Only draw stars above horizon (approximate)
-                    guard sy < avgHorizonY else { continue }
-                    let rect = CGRect(
-                        x: sx - star.radius,
-                        y: sy - star.radius,
-                        width: star.radius * 2,
-                        height: star.radius * 2
-                    )
-                    context.fill(
-                        Path(ellipseIn: rect),
-                        with: .color(.white.opacity(star.opacity))
-                    )
+                    guard let pt = GeoMath.projectToScreen(
+                        worldDirection: star.dir,
+                        rotationMatrix: R,
+                        horizontalFOV: Self.horizontalFOV,
+                        verticalFOV: Self.verticalFOV,
+                        screenSize: size
+                    ) else { continue }
+                    let img = resolvedStars[star.imageIndex]
+                    let w = img.size.width * star.scale
+                    let h = img.size.height * star.scale
+                    let rect = CGRect(x: pt.x - w / 2, y: pt.y - h / 2, width: w, height: h)
+                    context.opacity = star.opacity
+                    context.draw(img, in: rect)
+                    context.opacity = 1
                 }
             }
 
-            // Green ground fill below horizon
-            context.fill(earthFillPath, with: .color(.green.opacity(0.08)))
+            // Sun (world-projected image, 180pt — drawn behind clouds)
+            if isDaytime, let sp = sunPosition {
+                let resolvedSun = context.resolve(Image("sun"))
+                let sunSize: CGFloat = 180
+                let aspect = resolvedSun.size.width / max(resolvedSun.size.height, 1)
+                let w = sunSize * aspect
+                let h = sunSize
+                let rect = CGRect(x: sp.x - w / 2, y: sp.y - h / 2, width: w, height: h)
+                context.draw(resolvedSun, in: rect)
+            }
+
+            // Clouds (day only, world-projected, skip any that overlap the sun)
+            if isDaytime, let R = rotationMatrix {
+                let roll = Self.deviceRoll(from: R)
+                let resolvedClouds = Self.cloudImageNames.map { context.resolve(Image($0)) }
+                for cloud in Self.clouds {
+                    guard let pt = GeoMath.projectToScreen(
+                        worldDirection: cloud.dir,
+                        rotationMatrix: R,
+                        horizontalFOV: Self.horizontalFOV,
+                        verticalFOV: Self.verticalFOV,
+                        screenSize: size
+                    ) else { continue }
+                    // Skip clouds that overlap with the sun
+                    if let sp = sunPosition {
+                        let dist = hypot(pt.x - sp.x, pt.y - sp.y)
+                        if dist < 120 { continue }
+                    }
+                    let img = resolvedClouds[cloud.imageIndex]
+                    let w = img.size.width * cloud.scale * 3
+                    let h = img.size.height * cloud.scale * 3
+                    context.drawLayer { ctx in
+                        ctx.translateBy(x: pt.x, y: pt.y)
+                        ctx.rotate(by: Angle(radians: -roll))
+                        ctx.draw(img, in: CGRect(x: -w / 2, y: -h / 2, width: w, height: h))
+                    }
+                }
+            }
 
             // Horizon stroke line
             if horizonPoints.count >= 2 {

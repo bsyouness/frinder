@@ -35,6 +35,7 @@
 		000000000000000000000026 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000023 /* AppDelegate.swift */; };
 		000000000000000000000027 /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = 200000000000000000000005 /* FirebaseMessaging */; };
 		EF233E7F2F356929009EB732 /* GeoMath.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF233E7D2F356929009EB732 /* GeoMath.swift */; };
+		EF233E822F356929009EB732 /* SolarPosition.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF233E812F356929009EB732 /* SolarPosition.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -63,6 +64,7 @@
 		100000000000000000000022 /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
 		100000000000000000000023 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		EF233E7D2F356929009EB732 /* GeoMath.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeoMath.swift; sourceTree = "<group>"; };
+		EF233E812F356929009EB732 /* SolarPosition.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SolarPosition.swift; sourceTree = "<group>"; };
 		EF233E802F3683E8009EB732 /* Frinder.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Frinder.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -166,6 +168,7 @@
 			isa = PBXGroup;
 			children = (
 				EF233E7D2F356929009EB732 /* GeoMath.swift */,
+				EF233E812F356929009EB732 /* SolarPosition.swift */,
 			);
 			path = Utilities;
 			sourceTree = "<group>";
@@ -261,6 +264,7 @@
 				000000000000000000000008 /* LocationService.swift in Sources */,
 				000000000000000000000009 /* MotionService.swift in Sources */,
 				EF233E7F2F356929009EB732 /* GeoMath.swift in Sources */,
+				EF233E822F356929009EB732 /* SolarPosition.swift in Sources */,
 				000000000000000000000010 /* FriendService.swift in Sources */,
 				000000000000000000000011 /* AuthViewModel.swift in Sources */,
 				000000000000000000000012 /* RadarViewModel.swift in Sources */,

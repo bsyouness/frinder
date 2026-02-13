@@ -199,26 +199,49 @@ class RadarViewModel: ObservableObject {
         )
     }
 
-    /// Whether it's currently daytime (civil twilight approximation: 6 AM – 8 PM)
+    /// Whether it's currently daytime based on real solar position
     var isDaytime: Bool {
+        if let loc = currentLocation {
+            return SolarPosition.isDaytime(date: Date(), latitude: loc.coordinate.latitude, longitude: loc.coordinate.longitude)
+        }
         let hour = Calendar.current.component(.hour, from: Date())
         return hour >= 6 && hour < 20
     }
 
-    /// Build a path for the earth fill below the horizon
+    /// Current sun elevation in degrees above horizon
+    var sunElevation: Double {
+        guard let loc = currentLocation else { return 0 }
+        return SolarPosition.sunPosition(date: Date(), latitude: loc.coordinate.latitude, longitude: loc.coordinate.longitude).elevation
+    }
+
+    /// Calculate the sun's screen position
+    func sunScreenPosition(in size: CGSize) -> CGPoint? {
+        guard let loc = currentLocation, let R = rotationMatrix else { return nil }
+        let pos = SolarPosition.sunPosition(date: Date(), latitude: loc.coordinate.latitude, longitude: loc.coordinate.longitude)
+        let azRad = pos.azimuth.toRadians()
+        let elRad = pos.elevation.toRadians()
+        let cosE = cos(elRad)
+        let worldDir = (x: cosE * cos(azRad), y: -cosE * sin(azRad), z: sin(elRad))
+        return GeoMath.projectToScreen(
+            worldDirection: worldDir,
+            rotationMatrix: R,
+            horizontalFOV: horizontalFOV,
+            verticalFOV: verticalFOV,
+            screenSize: size
+        )
+    }
+
+    /// Whether the zenith (straight up) is visible on screen — used to determine sky/earth orientation
+    /// Build a path for the earth fill below the horizon line on screen
     func earthFillPath(in size: CGSize) -> Path {
         let horizon = horizonPoints(in: size)
         guard horizon.count >= 2 else { return Path() }
         let sorted = horizon.sorted { $0.x < $1.x }
 
         return Path { path in
-            // Start from bottom-left, trace up to first horizon point
             path.move(to: CGPoint(x: 0, y: size.height))
             path.addLine(to: CGPoint(x: sorted.first!.x, y: sorted.first!.y))
-            for pt in sorted.dropFirst() {
-                path.addLine(to: pt)
-            }
-            // Close along bottom-right
+            for pt in sorted.dropFirst() { path.addLine(to: pt) }
             path.addLine(to: CGPoint(x: size.width, y: size.height))
             path.closeSubpath()
         }
