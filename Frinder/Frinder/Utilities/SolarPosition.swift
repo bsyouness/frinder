@@ -58,7 +58,7 @@ enum SolarPosition {
 
     // MARK: - Helpers
 
-    private static func julianDate(from date: Date) -> Double {
+    static func julianDate(from date: Date) -> Double {
         // Seconds since Jan 1, 2000 12:00 TT (approximately UTC for our purposes)
         let j2000 = DateComponents(calendar: .init(identifier: .gregorian), timeZone: .gmt,
                                    year: 2000, month: 1, day: 1, hour: 12).date!
@@ -66,7 +66,7 @@ enum SolarPosition {
         return 2451545.0 + seconds / 86400.0
     }
 
-    private static func hourOfDay(_ date: Date) -> Double {
+    static func hourOfDay(_ date: Date) -> Double {
         let comps = Calendar(identifier: .gregorian).dateComponents(in: TimeZone.gmt, from: date)
         return Double(comps.hour ?? 0) + Double(comps.minute ?? 0) / 60.0 + Double(comps.second ?? 0) / 3600.0
     }

@@ -233,6 +233,28 @@ class RadarViewModel: ObservableObject {
         )
     }
 
+    /// Current moon phase image name (nil during new moon)
+    var moonImageName: String? {
+        LunarPosition.moonPhaseImageName(date: Date())
+    }
+
+    /// Calculate the moon's screen position
+    func moonScreenPosition(in size: CGSize) -> CGPoint? {
+        guard let loc = currentLocation, let R = rotationMatrix else { return nil }
+        let pos = LunarPosition.moonPosition(date: Date(), latitude: loc.coordinate.latitude, longitude: loc.coordinate.longitude)
+        let azRad = pos.azimuth.toRadians()
+        let elRad = pos.elevation.toRadians()
+        let cosE = cos(elRad)
+        let worldDir = (x: cosE * cos(azRad), y: -cosE * sin(azRad), z: sin(elRad))
+        return GeoMath.projectToScreen(
+            worldDirection: worldDir,
+            rotationMatrix: R,
+            horizontalFOV: horizontalFOV,
+            verticalFOV: verticalFOV,
+            screenSize: size
+        )
+    }
+
     /// Whether the zenith (straight up) is visible on screen — used to determine sky/earth orientation
     /// Build a path for the earth fill below the horizon line on screen
     func earthFillPath(in size: CGSize) -> Path {
