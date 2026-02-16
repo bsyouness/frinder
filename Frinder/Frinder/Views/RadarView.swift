@@ -55,6 +55,7 @@ struct RadarView: View {
                                     },
                                     screenSize: geometry.size,
                                     expandedClusterId: $expandedClusterId)
+                                .zIndex(expandedClusterId == cluster.id ? 1 : 0)
                             }
                         }
 
@@ -363,7 +364,7 @@ struct LandmarkClusterView: View {
         .onTapGesture {
             if !isOffScreen {
                 withAnimation(.easeInOut(duration: 0.2)) {
-                    expandedClusterId = cluster.id
+                    expandedClusterId = isExpanded ? nil : cluster.id
                 }
             }
         }
