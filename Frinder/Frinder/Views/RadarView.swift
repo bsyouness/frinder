@@ -273,6 +273,8 @@ struct LandmarkClusterView: View {
                cluster.position.y > screenSize.height + margin
     }
 
+    private let singleElementHeight: CGFloat = 25
+    private let maxElementsForList: CGFloat = 10
     var body: some View {
         VStack(spacing: 2) {
             if isExpanded && !isOffScreen {
@@ -326,8 +328,7 @@ struct LandmarkClusterView: View {
                         }
                     }
                 }
-                .fixedSize(horizontal: false, vertical: true)
-                .frame(maxHeight: 400)
+                .frame(maxHeight: min(CGFloat(cluster.totalCount) * singleElementHeight, singleElementHeight*maxElementsForList))
                 .padding(8)
                 .background(
                     RoundedRectangle(cornerRadius: 20)
