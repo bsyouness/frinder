@@ -1,0 +1,15 @@
+--indent 4
+--indentcase false
+--trimwhitespace always
+--voidtype void
+--wraparguments before-first
+--wrapparameters before-first
+--wrapcollections before-first
+--closingparen same-line
+--commas always
+--semicolons never
+--operatorfunc spaced
+--ranges spaced
+--stripunusedargs closure-only
+--maxwidth 120
+--swiftversion 5.9
