@@ -448,11 +448,15 @@ struct EarthView: View {
             let earthColor = Color(red: 50.0/255, green: 168.0/255, blue: 82.0/255).opacity(0.25)
 
             if let R = rotationMatrix {
+                // Skip earth fill when looking steeply up — horizon forms a ring and the
+                // left-to-right path logic incorrectly fills the sky region with earth color
+                let lookUp = -R.m33
+
                 // Project nadir (straight down, 0,0,-1) to find which screen region is earth
                 let nadirDz = R.m31 * 0 + R.m32 * 0 + R.m33 * (-1)
                 let nadirVisible = nadirDz < 0
 
-                if horizonPoints.count >= 10 {
+                if lookUp < 0.5, horizonPoints.count >= 10 {
                     // Enough horizon points for a reliable path
                     let sorted = horizonPoints.sorted { $0.x < $1.x }
                     let avgHorizonY = sorted.map(\.y).reduce(0, +) / CGFloat(sorted.count)
