@@ -517,8 +517,8 @@ struct EarthView: View {
                 }
             }
 
-            // Moon (night only, world-projected image, ~120pt)
-            if !isDaytime, let mp = moonPosition, let moonName = moonImageName {
+            // Moon (world-projected image, ~120pt)
+            if let mp = moonPosition, let moonName = moonImageName {
                 let resolvedMoon = context.resolve(Image(moonName))
                 let moonSize: CGFloat = 120
                 let aspect = resolvedMoon.size.width / max(resolvedMoon.size.height, 1)
@@ -529,7 +529,7 @@ struct EarthView: View {
             }
 
             // Sun (world-projected image, 180pt — drawn behind clouds)
-            if isDaytime, let sp = sunPosition {
+            if let sp = sunPosition {
                 let resolvedSun = context.resolve(Image("sun"))
                 let sunSize: CGFloat = 180
                 let aspect = resolvedSun.size.width / max(resolvedSun.size.height, 1)
