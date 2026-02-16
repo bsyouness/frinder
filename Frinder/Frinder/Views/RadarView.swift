@@ -444,58 +444,57 @@ struct EarthView: View {
 
     var body: some View {
         Canvas { context, size in
-            // Earth fill (#32a852) — determine earth region by projecting
-            // a point just below the horizon and checking which screen half it lands in
+            // Earth fill — build a fan path from the projected nadir through all
+            // horizon points. The nadir is always an earth point, so the fan
+            // naturally covers the earth region regardless of viewing angle.
+            // Canvas clips to its bounds, so off-screen parts of the path are harmless.
             let earthColor = Color(red: 50.0/255, green: 168.0/255, blue: 82.0/255).opacity(0.25)
 
             if let R = rotationMatrix {
-                // Skip earth fill when looking steeply up — horizon forms a ring and the
-                // left-to-right path logic incorrectly fills the sky region with earth color
-                let lookUp = -R.m33
+                if horizonPoints.count >= 10 {
+                    // Project nadir (0,0,-1) to screen — even if behind device
+                    let ndx = -R.m13, ndy = -R.m23, ndz = -R.m33
+                    let halfW = size.width / 2, halfH = size.height / 2
+                    let hFOVRad = Self.horizontalFOV.toRadians()
+                    let vFOVRad = Self.verticalFOV.toRadians()
 
-                // Project nadir (straight down, 0,0,-1) to find which screen region is earth
-                let nadirDz = R.m31 * 0 + R.m32 * 0 + R.m33 * (-1)
-                let nadirVisible = nadirDz < 0
-
-                if lookUp < 0.5, horizonPoints.count >= 10 {
-                    // Enough horizon points for a reliable path
-                    let sorted = horizonPoints.sorted { $0.x < $1.x }
-                    let avgHorizonY = sorted.map(\.y).reduce(0, +) / CGFloat(sorted.count)
-
-                    // Determine if earth is below or above the horizon on screen
-                    // by checking where the nadir projects relative to the horizon
-                    let earthBelow: Bool
-                    if nadirVisible {
-                        let nadirDx = R.m11 * 0 + R.m12 * 0 + R.m13 * (-1)
-                        let nadirDy = R.m21 * 0 + R.m22 * 0 + R.m23 * (-1)
-                        let nadirAngleY = atan2(nadirDy, -nadirDz)
-                        let vFOVRad = Self.verticalFOV.toRadians()
-                        let nadirPy = size.height / 2 - CGFloat(nadirAngleY / (vFOVRad / 2)) * size.height / 2
-                        earthBelow = nadirPy > avgHorizonY
+                    let nadirScreen: CGPoint
+                    if ndz < -0.001 {
+                        // Nadir in front of device — normal angular projection
+                        let ax = atan2(ndx, -ndz)
+                        let ay = atan2(ndy, -ndz)
+                        nadirScreen = CGPoint(
+                            x: halfW + CGFloat(ax / (hFOVRad / 2)) * halfW,
+                            y: halfH - CGFloat(ay / (vFOVRad / 2)) * halfH
+                        )
                     } else {
-                        // Nadir not visible — earth is on the far side (behind device)
-                        // Check: if looking up, earth is below horizon on screen
-                        earthBelow = R.m33 < 0  // device z-axis z-component < 0 means looking up
+                        // Nadir behind device — push far off screen in its direction
+                        let len = sqrt(ndx * ndx + ndy * ndy)
+                        if len > 0.001 {
+                            nadirScreen = CGPoint(
+                                x: halfW + CGFloat(ndx / len) * 3000,
+                                y: halfH - CGFloat(ndy / len) * 3000
+                            )
+                        } else {
+                            nadirScreen = CGPoint(x: halfW, y: halfH + 3000)
+                        }
+                    }
+
+                    // Sort horizon points by angle around nadir to form a proper fan
+                    let sorted = horizonPoints.sorted { a, b in
+                        atan2(a.y - nadirScreen.y, a.x - nadirScreen.x) <
+                            atan2(b.y - nadirScreen.y, b.x - nadirScreen.x)
                     }
 
                     var earthPath = Path()
-                    if earthBelow {
-                        earthPath.move(to: CGPoint(x: 0, y: size.height))
-                        earthPath.addLine(to: CGPoint(x: sorted.first!.x, y: sorted.first!.y))
-                        for pt in sorted.dropFirst() { earthPath.addLine(to: pt) }
-                        earthPath.addLine(to: CGPoint(x: size.width, y: size.height))
-                    } else {
-                        earthPath.move(to: CGPoint(x: 0, y: 0))
-                        earthPath.addLine(to: CGPoint(x: sorted.first!.x, y: sorted.first!.y))
-                        for pt in sorted.dropFirst() { earthPath.addLine(to: pt) }
-                        earthPath.addLine(to: CGPoint(x: size.width, y: 0))
-                    }
+                    earthPath.move(to: nadirScreen)
+                    for pt in sorted { earthPath.addLine(to: pt) }
                     earthPath.closeSubpath()
                     context.fill(earthPath, with: .color(earthColor))
                 } else {
-                    // No reliable horizon — fill entire screen if looking at ground
-                    // Nadir visible means we can see the ground
-                    if nadirVisible {
+                    // No reliable horizon — fill entire screen if nadir is visible (looking at ground)
+                    let nadirDz = -R.m33
+                    if nadirDz < 0 {
                         context.fill(Path(CGRect(origin: .zero, size: size)), with: .color(earthColor))
                     }
                 }
