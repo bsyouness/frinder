@@ -1,6 +1,6 @@
-import SwiftUI
 import CoreLocation
 import CoreMotion
+import SwiftUI
 
 struct RadarView: View {
     @EnvironmentObject var radarViewModel: RadarViewModel
@@ -31,8 +31,7 @@ struct RadarView: View {
                         sunPosition: radarViewModel.sunScreenPosition(in: geometry.size),
                         moonPosition: radarViewModel.moonScreenPosition(in: geometry.size),
                         moonImageName: radarViewModel.moonImageName,
-                        rotationMatrix: radarViewModel.rotationMatrix
-                    )
+                        rotationMatrix: radarViewModel.rotationMatrix)
 
                     // Landmark dots (shown behind friends) - clustered when overlapping
                     if radarViewModel.showLandmarks {
@@ -44,8 +43,7 @@ struct RadarView: View {
                                 LandmarkDotView(
                                     landmark: landmark,
                                     distance: radarViewModel.landmarkDistance(for: landmark),
-                                    position: cluster.position
-                                )
+                                    position: cluster.position)
                             } else {
                                 LandmarkClusterView(
                                     cluster: cluster,
@@ -56,8 +54,7 @@ struct RadarView: View {
                                         return settings.distanceUnit.format(meters: distance)
                                     },
                                     screenSize: geometry.size,
-                                    expandedClusterId: $expandedClusterId
-                                )
+                                    expandedClusterId: $expandedClusterId)
                             }
                         }
 
@@ -67,8 +64,7 @@ struct RadarView: View {
                                 FriendDotView(
                                     friend: friend,
                                     userLocation: radarViewModel.currentLocation,
-                                    position: radarViewModel.friendPosition(for: friend, in: geometry.size)
-                                )
+                                    position: radarViewModel.friendPosition(for: friend, in: geometry.size))
                             }
                         }
                     } else {
@@ -77,13 +73,12 @@ struct RadarView: View {
                             FriendDotView(
                                 friend: friend,
                                 userLocation: radarViewModel.currentLocation,
-                                position: radarViewModel.friendPosition(for: friend, in: geometry.size)
-                            )
+                                position: radarViewModel.friendPosition(for: friend, in: geometry.size))
                         }
                     }
 
                     // Empty state only if no friends AND landmarks are hidden
-                    if radarViewModel.friends.isEmpty && !radarViewModel.showLandmarks {
+                    if radarViewModel.friends.isEmpty, !radarViewModel.showLandmarks {
                         EmptyStateView()
                     }
 
@@ -108,8 +103,8 @@ struct RadarView: View {
                     if dist > 150 || pos.x < 0 {
                         NavigationArrowView(
                             friendName: target.displayName,
-                            angle: radarViewModel.arrowAngle() ?? 0
-                        ) {
+                            angle: radarViewModel.arrowAngle() ?? 0)
+                        {
                             radarViewModel.targetFriend = nil
                         }
                     } else {
@@ -175,8 +170,9 @@ struct FriendDotView: View {
                 .foregroundStyle(.white)
 
             // Distance
-            if let userLocation = userLocation,
-               let distance = friend.distance(from: userLocation) {
+            if let userLocation,
+               let distance = friend.distance(from: userLocation)
+            {
                 Text(settings.distanceUnit.format(meters: distance))
                     .font(.caption2)
                     .foregroundStyle(.white.opacity(0.7))
@@ -207,14 +203,11 @@ struct DefaultAvatarView: View {
                     colors: [.blue, .blue.opacity(0.6)],
                     center: .center,
                     startRadius: 0,
-                    endRadius: 22
-                )
-            )
+                    endRadius: 22))
             .frame(width: 44, height: 44)
             .overlay(
                 Circle()
-                    .stroke(.white.opacity(0.5), lineWidth: 2)
-            )
+                    .stroke(.white.opacity(0.5), lineWidth: 2))
             .shadow(color: .blue.opacity(0.5), radius: 8)
     }
 }
@@ -238,7 +231,7 @@ struct LandmarkDotView: View {
                 .lineLimit(1)
 
             // Distance
-            if let distance = distance {
+            if let distance {
                 Text(distance)
                     .font(.system(size: 8))
                     .foregroundStyle(.white.opacity(0.6))
@@ -248,8 +241,7 @@ struct LandmarkDotView: View {
         .padding(.vertical, 4)
         .background(
             Capsule()
-                .fill(.black.opacity(0.4))
-        )
+                .fill(.black.opacity(0.4)))
         .position(position)
         .animation(.easeOut(duration: 0.1), value: position.x)
         .animation(.easeOut(duration: 0.1), value: position.y)
@@ -263,21 +255,23 @@ struct LandmarkClusterView: View {
     let screenSize: CGSize
     @Binding var expandedClusterId: String?
 
-    private var isExpanded: Bool { expandedClusterId == cluster.id }
+    private var isExpanded: Bool {
+        expandedClusterId == cluster.id
+    }
 
     private var isOffScreen: Bool {
         let margin: CGFloat = 50
         return cluster.position.x < -margin ||
-               cluster.position.x > screenSize.width + margin ||
-               cluster.position.y < -margin ||
-               cluster.position.y > screenSize.height + margin
+            cluster.position.x > screenSize.width + margin ||
+            cluster.position.y < -margin ||
+            cluster.position.y > screenSize.height + margin
     }
 
     private let singleElementHeight: CGFloat = 25
     private let maxElementsForList: CGFloat = 10
     var body: some View {
         VStack(spacing: 2) {
-            if isExpanded && !isOffScreen {
+            if isExpanded, !isOffScreen {
                 // Expanded list of friends + landmarks
                 ScrollView {
                     VStack(alignment: .leading, spacing: 4) {
@@ -290,8 +284,7 @@ struct LandmarkClusterView: View {
                                     .overlay(
                                         Image(systemName: "person.fill")
                                             .font(.system(size: 8))
-                                            .foregroundStyle(.white)
-                                    )
+                                            .foregroundStyle(.white))
                                 VStack(alignment: .leading, spacing: 1) {
                                     Text(friend.displayName)
                                         .font(.system(size: 9, weight: .medium))
@@ -328,12 +321,13 @@ struct LandmarkClusterView: View {
                         }
                     }
                 }
-                .frame(maxHeight: min(CGFloat(cluster.totalCount) * singleElementHeight, singleElementHeight*maxElementsForList))
+                .frame(maxHeight: min(
+                    CGFloat(cluster.totalCount) * singleElementHeight,
+                    singleElementHeight * maxElementsForList))
                 .padding(8)
                 .background(
                     RoundedRectangle(cornerRadius: 20)
-                        .fill(.black.opacity(0.8))
-                )
+                        .fill(.black.opacity(0.8)))
                 .frame(width: 160)
             } else {
                 // Collapsed cluster icon with badges
@@ -363,8 +357,7 @@ struct LandmarkClusterView: View {
                 .padding(8)
                 .background(
                     Capsule()
-                        .fill(.black.opacity(0.6))
-                )
+                        .fill(.black.opacity(0.6)))
             }
         }
         .onTapGesture {
@@ -375,7 +368,7 @@ struct LandmarkClusterView: View {
             }
         }
         .onChange(of: isOffScreen) { _, offScreen in
-            if offScreen && isExpanded {
+            if offScreen, isExpanded {
                 expandedClusterId = nil
             }
         }
@@ -389,10 +382,10 @@ struct EarthView: View {
     let horizonPoints: [CGPoint]
     let isDaytime: Bool
     let screenSize: CGSize
-    var sunPosition: CGPoint? = nil
-    var moonPosition: CGPoint? = nil
-    var moonImageName: String? = nil
-    var rotationMatrix: CMRotationMatrix? = nil
+    var sunPosition: CGPoint?
+    var moonPosition: CGPoint?
+    var moonImageName: String?
+    var rotationMatrix: CMRotationMatrix?
 
     private static let horizontalFOV: Double = 60.0
     private static let verticalFOV: Double = 90.0
@@ -401,36 +394,42 @@ struct EarthView: View {
     private static let cloudImageNames = ["cloud1", "cloud2", "cloud3", "cloud4", "cloud5"]
 
     /// Fixed star world directions + visual properties
-    private static let stars: [(dir: (x: Double, y: Double, z: Double), imageIndex: Int, scale: Double, opacity: Double)] = {
+    private static let stars: [(
+        dir: (x: Double, y: Double, z: Double),
+        imageIndex: Int,
+        scale: Double,
+        opacity: Double)] = {
         var rng = SeededRandomNumberGenerator(seed: 42)
-        return (0..<80).map { _ in
-            let az = Double.random(in: 0...(2 * .pi), using: &rng)
-            let el = Double.random(in: 0.1...1.2, using: &rng)
+        return (0 ..< 80).map { _ in
+            let az = Double.random(in: 0 ... (2 * .pi), using: &rng)
+            let el = Double.random(in: 0.1 ... 1.2, using: &rng)
             let cosE = cos(el)
             let dir = (x: cosE * cos(az), y: -cosE * sin(az), z: sin(el))
             return (
                 dir: dir,
-                imageIndex: Int.random(in: 0..<5, using: &rng),
-                scale: Double.random(in: 0.04...0.08, using: &rng),
-                opacity: Double.random(in: 0.5...0.9, using: &rng)
-            )
+                imageIndex: Int.random(in: 0 ..< 5, using: &rng),
+                scale: Double.random(in: 0.04 ... 0.08, using: &rng),
+                opacity: Double.random(in: 0.5 ... 0.9, using: &rng))
         }
     }()
 
     /// Fixed cloud world directions + visual properties (45 clouds, upper hemisphere)
-    private static let clouds: [(dir: (x: Double, y: Double, z: Double), imageIndex: Int, scale: Double, opacity: Double)] = {
+    private static let clouds: [(
+        dir: (x: Double, y: Double, z: Double),
+        imageIndex: Int,
+        scale: Double,
+        opacity: Double)] = {
         var rng = SeededRandomNumberGenerator(seed: 99)
-        return (0..<20).map { _ in
-            let az = Double.random(in: 0...(2 * .pi), using: &rng)
-            let el = Double.random(in: 0.1...1.3, using: &rng)
+        return (0 ..< 20).map { _ in
+            let az = Double.random(in: 0 ... (2 * .pi), using: &rng)
+            let el = Double.random(in: 0.1 ... 1.3, using: &rng)
             let cosE = cos(el)
             let dir = (x: cosE * cos(az), y: -cosE * sin(az), z: sin(el))
             return (
                 dir: dir,
-                imageIndex: Int.random(in: 0..<5, using: &rng),
-                scale: Double.random(in: 0.08...0.16, using: &rng),
-                opacity: 1.0
-            )
+                imageIndex: Int.random(in: 0 ..< 5, using: &rng),
+                scale: Double.random(in: 0.08 ... 0.16, using: &rng),
+                opacity: 1.0)
         }
     }()
 
@@ -444,57 +443,100 @@ struct EarthView: View {
 
     var body: some View {
         Canvas { context, size in
-            // Earth fill — build a fan path from the projected nadir through all
-            // horizon points. The nadir is always an earth point, so the fan
-            // naturally covers the earth region regardless of viewing angle.
-            // Canvas clips to its bounds, so off-screen parts of the path are harmless.
-            let earthColor = Color(red: 50.0/255, green: 168.0/255, blue: 82.0/255).opacity(0.25)
+            // --- Earth fill (robust): clip screen rect by horizon half-space ---
+            let earthColor = Color(red: 50.0 / 255, green: 168.0 / 255, blue: 82.0 / 255).opacity(0.25)
 
             if let R = rotationMatrix {
-                if horizonPoints.count >= 10 {
-                    // Project nadir (0,0,-1) to screen — even if behind device
-                    let ndx = -R.m13, ndy = -R.m23, ndz = -R.m33
-                    let halfW = size.width / 2, halfH = size.height / 2
-                    let hFOVRad = Self.horizontalFOV.toRadians()
-                    let vFOVRad = Self.verticalFOV.toRadians()
+                let halfW = size.width / 2
+                let halfH = size.height / 2
+                let hFOVRad = Self.horizontalFOV.toRadians()
+                let vFOVRad = Self.verticalFOV.toRadians()
 
-                    let nadirScreen: CGPoint
-                    if ndz < -0.001 {
-                        // Nadir in front of device — normal angular projection
-                        let ax = atan2(ndx, -ndz)
-                        let ay = atan2(ndy, -ndz)
-                        nadirScreen = CGPoint(
-                            x: halfW + CGFloat(ax / (hFOVRad / 2)) * halfW,
-                            y: halfH - CGFloat(ay / (vFOVRad / 2)) * halfH
-                        )
-                    } else {
-                        // Nadir behind device — push far off screen in its direction
-                        let len = sqrt(ndx * ndx + ndy * ndy)
-                        if len > 0.001 {
-                            nadirScreen = CGPoint(
-                                x: halfW + CGFloat(ndx / len) * 3000,
-                                y: halfH - CGFloat(ndy / len) * 3000
-                            )
+                func rayWorldZ(at p: CGPoint) -> Double {
+                    // Screen -> angular offsets (matches your existing angular projection)
+                    let nx = Double((p.x - halfW) / halfW) // -1..1
+                    let ny = Double((halfH - p.y) / halfH) // -1..1 (up positive)
+
+                    let ax = nx * (hFOVRad / 2)
+                    let ay = ny * (vFOVRad / 2)
+
+                    // Build a camera/device ray: forward is -Z
+                    var dx = tan(ax)
+                    var dy = tan(ay)
+                    var dz = -1.0
+
+                    // Normalize in device space
+                    let len = sqrt(dx * dx + dy * dy + dz * dz)
+                    dx /= len
+                    dy /= len
+                    dz /= len
+
+                    // Device -> World using transpose (since R maps world -> device)
+                    let wx = R.m11 * dx + R.m21 * dy + R.m31 * dz
+                    let wy = R.m12 * dx + R.m22 * dy + R.m32 * dz
+                    let wz = R.m13 * dx + R.m23 * dy + R.m33 * dz
+
+                    // In your world model, z>0 is up (stars have positive z), so earth is z<0
+                    _ = wx
+                    _ = wy
+                    return wz
+                }
+
+                func isEarth(_ p: CGPoint) -> Bool {
+                    rayWorldZ(at: p) < 0
+                }
+
+                func edgeCrossing(_ a: CGPoint, _ b: CGPoint) -> CGPoint {
+                    // Binary search for wz==0 along the edge
+                    var lo = a
+                    var hi = b
+                    let sLo = rayWorldZ(at: lo)
+
+                    for _ in 0 ..< 22 {
+                        let mid = CGPoint(x: (lo.x + hi.x) / 2, y: (lo.y + hi.y) / 2)
+                        let sMid = rayWorldZ(at: mid)
+                        if (sMid >= 0) == (sLo >= 0) {
+                            lo = mid
                         } else {
-                            nadirScreen = CGPoint(x: halfW, y: halfH + 3000)
+                            hi = mid
                         }
                     }
+                    return CGPoint(x: (lo.x + hi.x) / 2, y: (lo.y + hi.y) / 2)
+                }
 
-                    // Sort horizon points by angle around nadir to form a proper fan
-                    let sorted = horizonPoints.sorted { a, b in
-                        atan2(a.y - nadirScreen.y, a.x - nadirScreen.x) <
-                            atan2(b.y - nadirScreen.y, b.x - nadirScreen.x)
+                // Screen corners in clockwise order
+                let corners: [CGPoint] = [
+                    CGPoint(x: 0, y: 0),
+                    CGPoint(x: size.width, y: 0),
+                    CGPoint(x: size.width, y: size.height),
+                    CGPoint(x: 0, y: size.height),
+                ]
+
+                var poly: [CGPoint] = []
+                for i in 0 ..< 4 {
+                    let a = corners[i]
+                    let b = corners[(i + 1) % 4]
+                    let aEarth = isEarth(a)
+                    let bEarth = isEarth(b)
+
+                    if aEarth { poly.append(a) }
+
+                    if aEarth != bEarth {
+                        poly.append(edgeCrossing(a, b))
                     }
+                }
 
+                if poly.count >= 3 {
                     var earthPath = Path()
-                    earthPath.move(to: nadirScreen)
-                    for pt in sorted { earthPath.addLine(to: pt) }
+                    earthPath.move(to: poly[0])
+                    for p in poly.dropFirst() {
+                        earthPath.addLine(to: p)
+                    }
                     earthPath.closeSubpath()
                     context.fill(earthPath, with: .color(earthColor))
                 } else {
-                    // No reliable horizon — fill entire screen if nadir is visible (looking at ground)
-                    let nadirDz = -R.m33
-                    if nadirDz < 0 {
+                    // Either all sky or all earth — fill accordingly
+                    if isEarth(CGPoint(x: halfW, y: halfH)) {
                         context.fill(Path(CGRect(origin: .zero, size: size)), with: .color(earthColor))
                     }
                 }
@@ -509,8 +551,7 @@ struct EarthView: View {
                         rotationMatrix: R,
                         horizontalFOV: Self.horizontalFOV,
                         verticalFOV: Self.verticalFOV,
-                        screenSize: size
-                    ) else { continue }
+                        screenSize: size) else { continue }
                     let img = resolvedStars[star.imageIndex]
                     let w = img.size.width * star.scale
                     let h = img.size.height * star.scale
@@ -553,8 +594,7 @@ struct EarthView: View {
                         rotationMatrix: R,
                         horizontalFOV: Self.horizontalFOV,
                         verticalFOV: Self.verticalFOV,
-                        screenSize: size
-                    ) else { continue }
+                        screenSize: size) else { continue }
                     let img = resolvedClouds[cloud.imageIndex]
                     let w = img.size.width * cloud.scale * 3
                     let h = img.size.height * cloud.scale * 3
@@ -740,8 +780,7 @@ struct NavigationArrowView: View {
         .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(.black.opacity(0.6))
-        )
+                .fill(.black.opacity(0.6)))
     }
 }
 
