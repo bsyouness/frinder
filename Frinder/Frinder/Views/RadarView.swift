@@ -265,7 +265,7 @@ struct LandmarkDotView: View {
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
         .background(
-            Capsule()
+            RoundedRectangle(cornerRadius: 8)
                 .fill(.black.opacity(0.4)))
         .position(position)
         .animation(.easeOut(duration: 0.1), value: position.x)
