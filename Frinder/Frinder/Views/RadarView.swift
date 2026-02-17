@@ -119,11 +119,12 @@ struct RadarView: View {
                 // Compass indicator at top
                 VStack {
                     CompassIndicator(heading: radarViewModel.deviceHeading)
-                        .padding(.top, 60)
+                        .padding(.top, geometry.safeAreaInsets.top + 12)
                     Spacer()
                 }
             }
         }
+        .ignoresSafeArea()
     }
 }
 
