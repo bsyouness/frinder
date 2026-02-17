@@ -13,6 +13,7 @@ class RadarViewModel: ObservableObject {
     @Published var isLocationAuthorized = false
     @Published var locationAuthorizationStatus: CLAuthorizationStatus = .notDetermined
     @Published var targetFriend: Friend?
+    @Published var friendLocations: [String: String] = [:]
 
     let landmarks = Landmark.allLandmarks
     var showLandmarks: Bool { AppSettings.shared.disabledLandmarkIds.count < Landmark.allLandmarks.count }
@@ -71,6 +72,54 @@ class RadarViewModel: ObservableObject {
     private let friendService = FriendService.shared
     private var cancellables = Set<AnyCancellable>()
     private var userId: String?
+    private let geocoder = CLGeocoder()
+    private var lastGeocodedCoordinates: [String: CLLocationCoordinate2D] = [:]
+    private var geocodingInProgress = Set<String>()
+
+    func friendLocationLabel(for friendId: String) -> String? {
+        friendLocations[friendId]
+    }
+
+    private func reverseGeocodeIfNeeded(for friend: Friend) {
+        guard let location = friend.location else { return }
+        let coord = CLLocationCoordinate2D(latitude: location.latitude, longitude: location.longitude)
+
+        if let lastCoord = lastGeocodedCoordinates[friend.id] {
+            let lastLoc = CLLocation(latitude: lastCoord.latitude, longitude: lastCoord.longitude)
+            let newLoc = CLLocation(latitude: coord.latitude, longitude: coord.longitude)
+            if lastLoc.distance(from: newLoc) < 1000 { return }
+        }
+
+        guard !geocodingInProgress.contains(friend.id) else { return }
+        geocodingInProgress.insert(friend.id)
+        lastGeocodedCoordinates[friend.id] = coord
+
+        let friendId = friend.id
+        let clLocation = CLLocation(latitude: coord.latitude, longitude: coord.longitude)
+        Task { [weak self] in
+            let geocoder = CLGeocoder()
+            do {
+                let placemarks = try await geocoder.reverseGeocodeLocation(clLocation)
+                if let placemark = placemarks.first {
+                    let city = placemark.locality ?? placemark.administrativeArea ?? ""
+                    let country = placemark.country ?? ""
+                    let label = city.isEmpty ? country : (country.isEmpty ? city : "\(city), \(country)")
+                    await MainActor.run {
+                        self?.friendLocations[friendId] = label
+                        self?.geocodingInProgress.remove(friendId)
+                    }
+                } else {
+                    await MainActor.run {
+                        self?.geocodingInProgress.remove(friendId)
+                    }
+                }
+            } catch {
+                await MainActor.run {
+                    self?.geocodingInProgress.remove(friendId)
+                }
+            }
+        }
+    }
 
     init() {
         setupBindings()
@@ -113,7 +162,13 @@ class RadarViewModel: ObservableObject {
         // Bind friends from service
         friendService.$friends
             .receive(on: DispatchQueue.main)
-            .assign(to: &$friends)
+            .sink { [weak self] friends in
+                self?.friends = friends
+                for friend in friends {
+                    self?.reverseGeocodeIfNeeded(for: friend)
+                }
+            }
+            .store(in: &cancellables)
     }
 
     func requestLocationAuthorization() {

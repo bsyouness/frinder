@@ -53,6 +53,7 @@ struct RadarView: View {
                                               let distance = friend.distance(from: userLocation) else { return nil }
                                         return settings.distanceUnit.format(meters: distance)
                                     },
+                                    getFriendLocation: { radarViewModel.friendLocationLabel(for: $0.id) },
                                     screenSize: geometry.size,
                                     expandedClusterId: $expandedClusterId)
                                 .zIndex(expandedClusterId == cluster.id ? 1 : 0)
@@ -65,6 +66,7 @@ struct RadarView: View {
                                 FriendDotView(
                                     friend: friend,
                                     userLocation: radarViewModel.currentLocation,
+                                    locationLabel: radarViewModel.friendLocationLabel(for: friend.id),
                                     position: radarViewModel.friendPosition(for: friend, in: geometry.size))
                             }
                         }
@@ -74,6 +76,7 @@ struct RadarView: View {
                             FriendDotView(
                                 friend: friend,
                                 userLocation: radarViewModel.currentLocation,
+                                locationLabel: radarViewModel.friendLocationLabel(for: friend.id),
                                 position: radarViewModel.friendPosition(for: friend, in: geometry.size))
                         }
                     }
@@ -131,6 +134,7 @@ struct RadarView: View {
 struct FriendDotView: View {
     let friend: Friend
     let userLocation: CLLocation?
+    let locationLabel: String?
     @ObservedObject var settings = AppSettings.shared
     @State private var showLastSeen = false
 
@@ -171,13 +175,23 @@ struct FriendDotView: View {
                 .fontWeight(.medium)
                 .foregroundStyle(.white)
 
-            // Distance
-            if let userLocation,
-               let distance = friend.distance(from: userLocation)
-            {
-                Text(settings.distanceUnit.format(meters: distance))
-                    .font(.caption2)
-                    .foregroundStyle(.white.opacity(0.7))
+            if settings.showDistanceAndLocation {
+                // Distance
+                if let userLocation,
+                   let distance = friend.distance(from: userLocation)
+                {
+                    Text(settings.distanceUnit.format(meters: distance))
+                        .font(.caption2)
+                        .foregroundStyle(.white.opacity(0.7))
+                }
+
+                // Location
+                if let locationLabel {
+                    Text(locationLabel)
+                        .font(.system(size: 9))
+                        .foregroundStyle(.white.opacity(0.5))
+                        .lineLimit(1)
+                }
             }
 
             // Last seen (shown on tap)
@@ -218,6 +232,7 @@ struct LandmarkDotView: View {
     let landmark: Landmark
     let distance: String?
     let position: CGPoint
+    @ObservedObject var settings = AppSettings.shared
 
     var body: some View {
         VStack(spacing: 2) {
@@ -232,11 +247,19 @@ struct LandmarkDotView: View {
                 .foregroundStyle(.white.opacity(0.85))
                 .lineLimit(1)
 
-            // Distance
-            if let distance {
-                Text(distance)
-                    .font(.system(size: 8))
-                    .foregroundStyle(.white.opacity(0.6))
+            if settings.showDistanceAndLocation {
+                // Distance
+                if let distance {
+                    Text(distance)
+                        .font(.system(size: 8))
+                        .foregroundStyle(.white.opacity(0.6))
+                }
+
+                // Location
+                Text(landmark.locationLabel)
+                    .font(.system(size: 7))
+                    .foregroundStyle(.white.opacity(0.5))
+                    .lineLimit(1)
             }
         }
         .padding(.horizontal, 8)
@@ -254,7 +277,9 @@ struct LandmarkClusterView: View {
     let cluster: LandmarkCluster
     let getDistance: (Landmark) -> String?
     let getFriendDistance: (Friend) -> String?
+    let getFriendLocation: (Friend) -> String?
     let screenSize: CGSize
+    @ObservedObject var settings = AppSettings.shared
     @Binding var expandedClusterId: String?
 
     private var isExpanded: Bool {
@@ -292,10 +317,18 @@ struct LandmarkClusterView: View {
                                         .font(.system(size: 9, weight: .medium))
                                         .foregroundStyle(.blue)
                                         .lineLimit(1)
-                                    if let distance = getFriendDistance(friend) {
-                                        Text(distance)
-                                            .font(.system(size: 8))
-                                            .foregroundStyle(.white.opacity(0.6))
+                                    if settings.showDistanceAndLocation {
+                                        if let distance = getFriendDistance(friend) {
+                                            Text(distance)
+                                                .font(.system(size: 8))
+                                                .foregroundStyle(.white.opacity(0.6))
+                                        }
+                                        if let location = getFriendLocation(friend) {
+                                            Text(location)
+                                                .font(.system(size: 7))
+                                                .foregroundStyle(.white.opacity(0.5))
+                                                .lineLimit(1)
+                                        }
                                     }
                                 }
                                 Spacer()
@@ -312,10 +345,16 @@ struct LandmarkClusterView: View {
                                         .font(.system(size: 9, weight: .medium))
                                         .foregroundStyle(.white.opacity(0.9))
                                         .lineLimit(1)
-                                    if let distance = getDistance(landmark) {
-                                        Text(distance)
-                                            .font(.system(size: 8))
-                                            .foregroundStyle(.white.opacity(0.6))
+                                    if settings.showDistanceAndLocation {
+                                        if let distance = getDistance(landmark) {
+                                            Text(distance)
+                                                .font(.system(size: 8))
+                                                .foregroundStyle(.white.opacity(0.6))
+                                        }
+                                        Text(landmark.locationLabel)
+                                            .font(.system(size: 7))
+                                            .foregroundStyle(.white.opacity(0.5))
+                                            .lineLimit(1)
                                     }
                                 }
                                 Spacer()

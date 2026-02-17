@@ -11,21 +11,36 @@ enum DistanceUnit: String, Codable, CaseIterable {
         }
     }
 
+    private static let decimalFormatter: NumberFormatter = {
+        let f = NumberFormatter()
+        f.numberStyle = .decimal
+        f.maximumFractionDigits = 1
+        return f
+    }()
+
+    private static let intFormatter: NumberFormatter = {
+        let f = NumberFormatter()
+        f.numberStyle = .decimal
+        f.maximumFractionDigits = 0
+        return f
+    }()
+
     func format(meters: Double) -> String {
         switch self {
         case .kilometers:
             if meters < 1000 {
-                return "\(Int(meters)) m"
+                return "\(Self.intFormatter.string(from: NSNumber(value: Int(meters))) ?? "\(Int(meters))") m"
             } else {
-                return String(format: "%.1f km", meters / 1000)
+                let km = meters / 1000
+                return "\(Self.decimalFormatter.string(from: NSNumber(value: km)) ?? String(format: "%.1f", km)) km"
             }
         case .miles:
             let miles = meters / 1609.344
             if miles < 0.1 {
                 let feet = meters * 3.28084
-                return "\(Int(feet)) ft"
+                return "\(Self.intFormatter.string(from: NSNumber(value: Int(feet))) ?? "\(Int(feet))") ft"
             } else {
-                return String(format: "%.1f mi", miles)
+                return "\(Self.decimalFormatter.string(from: NSNumber(value: miles)) ?? String(format: "%.1f", miles)) mi"
             }
         }
     }
@@ -47,6 +62,12 @@ class AppSettings: ObservableObject {
     @Published var disabledLandmarkIds: Set<String> {
         didSet {
             UserDefaults.standard.set(Array(disabledLandmarkIds), forKey: "disabledLandmarkIds")
+        }
+    }
+
+    @Published var showDistanceAndLocation: Bool {
+        didSet {
+            UserDefaults.standard.set(showDistanceAndLocation, forKey: "showDistanceAndLocation")
         }
     }
 
@@ -80,5 +101,7 @@ class AppSettings: ObservableObject {
         } else {
             self.disabledLandmarkIds = []
         }
+
+        self.showDistanceAndLocation = UserDefaults.standard.object(forKey: "showDistanceAndLocation") as? Bool ?? true
     }
 }

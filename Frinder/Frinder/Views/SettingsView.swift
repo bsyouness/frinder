@@ -61,6 +61,7 @@ struct SettingsView: View {
                         }
                     }
 
+                    Toggle("Show Distance & Location", isOn: $settings.showDistanceAndLocation)
                 }
 
                 // Landmarks section

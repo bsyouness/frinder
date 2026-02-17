@@ -30,7 +30,7 @@ struct FriendsView: View {
                             .font(.subheadline)
                     } else {
                         ForEach(friendsViewModel.friends) { friend in
-                            FriendRow(friend: friend, onNavigate: onNavigate)
+                            FriendRow(friend: friend, locationLabel: friendsViewModel.friendLocationLabel(for: friend.id), onNavigate: onNavigate)
                                 .swipeActions(edge: .trailing) {
                                     Button(role: .destructive) {
                                         Task { await friendsViewModel.removeFriend(friend) }
@@ -84,7 +84,9 @@ struct FriendsView: View {
 
 struct FriendRow: View {
     let friend: Friend
+    var locationLabel: String? = nil
     var onNavigate: ((Friend) -> Void)? = nil
+    @ObservedObject var settings = AppSettings.shared
 
     private func relativeTime(_ interval: TimeInterval) -> String {
         let minutes = Int(interval / 60)
@@ -143,6 +145,12 @@ struct FriendRow: View {
                 } else {
                     Text("Offline")
                         .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                if settings.showDistanceAndLocation, let locationLabel {
+                    Text(locationLabel)
+                        .font(.caption2)
                         .foregroundStyle(.secondary)
                 }
             }
