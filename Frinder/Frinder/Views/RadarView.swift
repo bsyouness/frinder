@@ -647,16 +647,6 @@ struct EarthView: View {
                 }
             }
 
-            // Horizon stroke line
-            if horizonPoints.count >= 2 {
-                let sorted = horizonPoints.sorted { $0.x < $1.x }
-                var line = Path()
-                line.move(to: sorted[0])
-                for pt in sorted.dropFirst() {
-                    line.addLine(to: pt)
-                }
-                context.stroke(line, with: .color(.white.opacity(0.3)), lineWidth: 1)
-            }
         }
     }
 }
