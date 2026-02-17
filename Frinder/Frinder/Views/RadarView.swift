@@ -294,7 +294,7 @@ struct LandmarkClusterView: View {
             cluster.position.y > screenSize.height + margin
     }
 
-    private let singleElementHeight: CGFloat = 25
+    private let singleElementHeight: CGFloat = 36
     private let maxElementsForList: CGFloat = 10
     var body: some View {
         VStack(spacing: 2) {
