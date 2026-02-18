@@ -16,7 +16,7 @@ struct RadarView: View {
 
                 if !radarViewModel.isLocationAuthorized {
                     if radarViewModel.locationAuthorizationStatus == .notDetermined {
-                        PrePermissionView(onReque stPermission: {
+                        PrePermissionView(onRequestPermission: {
                             radarViewModel.requestLocationAuthorization()
                         })
                     } else {
@@ -696,10 +696,11 @@ struct EarthView: View {
                 }
             }
 
-            // Clouds (day only, world-projected, skip any that overlap the sun)
+            // Clouds (day only, world-projected, skip any that overlap the sun or moon)
             if isDaytime, let R = rotationMatrix {
                 let roll = Self.deviceRoll(from: R)
                 let resolvedClouds = Self.cloudImageNames.map { context.resolve(Image($0)) }
+                let clearanceRadius: CGFloat = 120
                 for cloud in Self.clouds {
                     guard let pt = GeoMath.projectToScreen(
                         worldDirection: cloud.dir,
@@ -707,6 +708,10 @@ struct EarthView: View {
                         horizontalFOV: Self.horizontalFOV,
                         verticalFOV: Self.verticalFOV,
                         screenSize: size) else { continue }
+                    // Skip clouds near the sun
+                    if let sp = sunPosition, hypot(pt.x - sp.x, pt.y - sp.y) < clearanceRadius { continue }
+                    // Skip clouds near the moon
+                    if let mp = moonPosition, hypot(pt.x - mp.x, pt.y - mp.y) < clearanceRadius { continue }
                     let img = resolvedClouds[cloud.imageIndex]
                     let w = img.size.width * cloud.scale * 3
                     let h = img.size.height * cloud.scale * 3
