@@ -12,6 +12,7 @@ struct MainTabView: View {
                 VStack(spacing: 0) {
                     RadarView()
                         .environmentObject(radarViewModel)
+                        .clipped()
                     BannerAdView()
                         .frame(height: bannerAdHeight)
                 }
