@@ -9,28 +9,37 @@ struct MainTabView: View {
     var body: some View {
         ZStack(alignment: .top) {
             TabView(selection: $selectedTab) {
-                RadarView()
-                    .environmentObject(radarViewModel)
-                    .tabItem {
-                        Label("Radar", systemImage: "dot.radiowaves.left.and.right")
-                    }
-                    .tag(0)
+                VStack(spacing: 0) {
+                    RadarView()
+                        .environmentObject(radarViewModel)
+                    BannerAdView()
+                }
+                .tabItem {
+                    Label("Radar", systemImage: "dot.radiowaves.left.and.right")
+                }
+                .tag(0)
 
-                FriendsView(onNavigate: { friend in
-                    radarViewModel.targetFriend = friend
-                    selectedTab = 0
-                })
+                VStack(spacing: 0) {
+                    FriendsView(onNavigate: { friend in
+                        radarViewModel.targetFriend = friend
+                        selectedTab = 0
+                    })
                     .environmentObject(friendsViewModel)
-                    .tabItem {
-                        Label("Friends", systemImage: "person.2")
-                    }
-                    .tag(1)
+                    BannerAdView()
+                }
+                .tabItem {
+                    Label("Friends", systemImage: "person.2")
+                }
+                .tag(1)
 
-                SettingsView()
-                    .tabItem {
-                        Label("Settings", systemImage: "gear")
-                    }
-                    .tag(2)
+                VStack(spacing: 0) {
+                    SettingsView()
+                    BannerAdView()
+                }
+                .tabItem {
+                    Label("Settings", systemImage: "gear")
+                }
+                .tag(2)
             }
             .onAppear {
                 // Use Firebase Auth user ID directly (works even when Firestore is offline)

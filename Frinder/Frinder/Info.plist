@@ -65,6 +65,17 @@
 		<string>magnetometer</string>
 		<string>gyroscope</string>
 	</array>
+	<key>GADApplicationIdentifier</key>
+	<string>ca-app-pub-7277027627144665~7386346325</string>
+	<key>NSUserTrackingUsageDescription</key>
+	<string>This identifier will be used to deliver personalized ads to you.</string>
+	<key>SKAdNetworkItems</key>
+	<array>
+		<dict>
+			<key>SKAdNetworkIdentifier</key>
+			<string>cstr6suwn9.skadnetwork</string>
+		</dict>
+	</array>
 	<key>UIStatusBarStyle</key>
 	<string>UIStatusBarStyleLightContent</string>
 	<key>UISupportedInterfaceOrientations</key>

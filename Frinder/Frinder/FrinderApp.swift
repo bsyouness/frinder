@@ -1,6 +1,7 @@
 import SwiftUI
 import FirebaseCore
 import GoogleSignIn
+import GoogleMobileAds
 
 @main
 struct FrinderApp: App {
@@ -9,6 +10,7 @@ struct FrinderApp: App {
 
     init() {
         FirebaseApp.configure()
+        MobileAds.shared.start(completionHandler: nil)
     }
 
     var body: some Scene {
