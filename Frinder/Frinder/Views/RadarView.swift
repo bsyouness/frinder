@@ -113,26 +113,18 @@ struct RadarView: View {
                             radarViewModel.targetFriend = nil
                         }
                     } else {
-                        // Friend is near center — auto-clear
+                        // Friend is near center — only auto-clear if not waiting for cluster expand
                         Color.clear.onAppear {
-                            radarViewModel.targetFriend = nil
-                        }
-                    }
-                }
-
-                // Auto-expand cluster containing targeted friend
-                Color.clear
-                    .frame(width: 0, height: 0)
-                    .onChange(of: radarViewModel.targetFriend?.id) { _, targetId in
-                        guard let targetId else { return }
-                        let clusters = radarViewModel.clusterLandmarks(in: geometry.size)
-                        if let cluster = clusters.first(where: { $0.friends.contains(where: { $0.id == targetId }) }),
-                           !cluster.isSingle {
-                            withAnimation(.easeInOut(duration: 0.2)) {
-                                expandedClusterId = cluster.id
+                            let clusters = radarViewModel.clusterLandmarks(in: geometry.size)
+                            let inCluster = clusters.contains(where: {
+                                !$0.isSingle && $0.friends.contains(where: { $0.id == target.id })
+                            })
+                            if !inCluster || expandedClusterId != nil {
+                                radarViewModel.targetFriend = nil
                             }
                         }
                     }
+                }
 
                 // Compass indicator at top
                 VStack {
@@ -405,6 +397,24 @@ struct LandmarkClusterView: View {
         .onChange(of: isOffScreen) { _, offScreen in
             if offScreen, isExpanded {
                 expandedClusterId = nil
+            }
+        }
+        .onAppear {
+            if let hid = highlightedFriendId,
+               cluster.friends.contains(where: { $0.id == hid }),
+               !isExpanded {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    expandedClusterId = cluster.id
+                }
+            }
+        }
+        .onChange(of: highlightedFriendId) { _, hid in
+            if let hid,
+               cluster.friends.contains(where: { $0.id == hid }),
+               !isExpanded {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    expandedClusterId = cluster.id
+                }
             }
         }
         .position(cluster.position)
