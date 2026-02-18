@@ -484,6 +484,17 @@ struct EarthView: View {
 
     var body: some View {
         Canvas { context, size in
+            // Sun (world-projected image, 180pt — drawn behind earth)
+            if let sp = sunPosition {
+                let resolvedSun = context.resolve(Image("sun"))
+                let sunSize: CGFloat = 180
+                let aspect = resolvedSun.size.width / max(resolvedSun.size.height, 1)
+                let w = sunSize * aspect
+                let h = sunSize
+                let rect = CGRect(x: sp.x - w / 2, y: sp.y - h / 2, width: w, height: h)
+                context.draw(resolvedSun, in: rect)
+            }
+
             // --- Earth fill (robust): clip screen rect by horizon half-space ---
             let earthColor = Color(red: 50.0 / 255, green: 168.0 / 255, blue: 82.0 / 255).opacity(0.25)
 
@@ -612,17 +623,6 @@ struct EarthView: View {
                 let h = moonSize
                 let rect = CGRect(x: mp.x - w / 2, y: mp.y - h / 2, width: w, height: h)
                 context.draw(resolvedMoon, in: rect)
-            }
-
-            // Sun (world-projected image, 180pt — drawn behind clouds)
-            if let sp = sunPosition {
-                let resolvedSun = context.resolve(Image("sun"))
-                let sunSize: CGFloat = 180
-                let aspect = resolvedSun.size.width / max(resolvedSun.size.height, 1)
-                let w = sunSize * aspect
-                let h = sunSize
-                let rect = CGRect(x: sp.x - w / 2, y: sp.y - h / 2, width: w, height: h)
-                context.draw(resolvedSun, in: rect)
             }
 
             // Clouds (day only, world-projected, skip any that overlap the sun)
