@@ -13,6 +13,7 @@ struct MainTabView: View {
                     RadarView()
                         .environmentObject(radarViewModel)
                     BannerAdView()
+                        .frame(height: bannerAdHeight)
                 }
                 .tabItem {
                     Label("Radar", systemImage: "dot.radiowaves.left.and.right")
@@ -26,6 +27,7 @@ struct MainTabView: View {
                     })
                     .environmentObject(friendsViewModel)
                     BannerAdView()
+                        .frame(height: bannerAdHeight)
                 }
                 .tabItem {
                     Label("Friends", systemImage: "person.2")
@@ -35,6 +37,7 @@ struct MainTabView: View {
                 VStack(spacing: 0) {
                     SettingsView()
                     BannerAdView()
+                        .frame(height: bannerAdHeight)
                 }
                 .tabItem {
                     Label("Settings", systemImage: "gear")
