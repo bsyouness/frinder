@@ -549,7 +549,7 @@ struct EarthView: View {
             }
 
             // --- Earth fill (robust): clip screen rect by horizon half-space ---
-            let earthColor = Color(red: 50.0 / 255, green: 168.0 / 255, blue: 82.0 / 255).opacity(0.25)
+            let earthColor = Color(red: 50.0 / 255, green: 168.0 / 255, blue: 82.0 / 255).opacity(0.75)
 
             if let R = rotationMatrix {
                 let halfW = size.width / 2
