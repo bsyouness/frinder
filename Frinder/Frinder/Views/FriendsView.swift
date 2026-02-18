@@ -229,6 +229,12 @@ struct FriendRequestRow: View {
 struct AddFriendSheet: View {
     @Binding var email: String
     let isLoading: Bool
+
+    private var isValidEmail: Bool {
+        let pattern = "[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}"
+        return email.range(of: pattern, options: .regularExpression) != nil
+    }
+
     let errorMessage: String?
     let successMessage: String?
     let onAdd: () -> Void
@@ -275,11 +281,11 @@ struct AddFriendSheet: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding()
-                .background(email.isEmpty ? Color.gray : Color.blue)
+                .background(!isValidEmail ? Color.gray : Color.blue)
                 .foregroundStyle(.white)
                 .cornerRadius(10)
                 .padding(.horizontal)
-                .disabled(email.isEmpty || isLoading)
+                .disabled(!isValidEmail || isLoading)
 
                 Spacer()
             }
