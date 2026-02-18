@@ -55,8 +55,18 @@ struct RadarView: View {
                                     },
                                     getFriendLocation: { radarViewModel.friendLocationLabel(for: $0.id) },
                                     screenSize: geometry.size,
-                                    expandedClusterId: $expandedClusterId)
+                                    expandedClusterId: $expandedClusterId,
+                                    highlightedFriendId: radarViewModel.targetFriend?.id)
                                 .zIndex(expandedClusterId == cluster.id ? 1 : 0)
+                            }
+                        }
+                        .onChange(of: radarViewModel.targetFriend?.id) { _, targetId in
+                            guard let targetId else { return }
+                            if let cluster = clusters.first(where: { $0.friends.contains(where: { $0.id == targetId }) }),
+                               !cluster.isSingle {
+                                withAnimation(.easeInOut(duration: 0.2)) {
+                                    expandedClusterId = cluster.id
+                                }
                             }
                         }
 
@@ -281,6 +291,7 @@ struct LandmarkClusterView: View {
     let screenSize: CGSize
     @ObservedObject var settings = AppSettings.shared
     @Binding var expandedClusterId: String?
+    var highlightedFriendId: String? = nil
 
     private var isExpanded: Bool {
         expandedClusterId == cluster.id
@@ -304,35 +315,13 @@ struct LandmarkClusterView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         // Friends first (blue accent)
                         ForEach(cluster.friends) { friend in
-                            HStack(spacing: 6) {
-                                Circle()
-                                    .fill(.blue)
-                                    .frame(width: 16, height: 16)
-                                    .overlay(
-                                        Image(systemName: "person.fill")
-                                            .font(.system(size: 8))
-                                            .foregroundStyle(.white))
-                                VStack(alignment: .leading, spacing: 1) {
-                                    Text(friend.displayName)
-                                        .font(.system(size: 9, weight: .medium))
-                                        .foregroundStyle(.blue)
-                                        .lineLimit(1)
-                                    if settings.showDistanceAndLocation {
-                                        if let distance = getFriendDistance(friend) {
-                                            Text(distance)
-                                                .font(.system(size: 8))
-                                                .foregroundStyle(.white.opacity(0.6))
-                                        }
-                                        if let location = getFriendLocation(friend) {
-                                            Text(location)
-                                                .font(.system(size: 7))
-                                                .foregroundStyle(.white.opacity(0.5))
-                                                .lineLimit(1)
-                                        }
-                                    }
-                                }
-                                Spacer()
-                            }
+                            let isHighlighted = friend.id == highlightedFriendId
+                            ClusterFriendRow(
+                                friend: friend,
+                                isHighlighted: isHighlighted,
+                                settings: settings,
+                                getFriendDistance: getFriendDistance,
+                                getFriendLocation: getFriendLocation)
                         }
 
                         // Landmarks (red accent)
@@ -416,6 +405,70 @@ struct LandmarkClusterView: View {
         .position(cluster.position)
         .animation(.easeOut(duration: 0.1), value: cluster.position.x)
         .animation(.easeOut(duration: 0.1), value: cluster.position.y)
+    }
+}
+
+struct ClusterFriendRow: View {
+    let friend: Friend
+    let isHighlighted: Bool
+    @ObservedObject var settings: AppSettings
+    let getFriendDistance: (Friend) -> String?
+    let getFriendLocation: (Friend) -> String?
+    @State private var blinkOn = true
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Circle()
+                .fill(.blue)
+                .frame(width: 16, height: 16)
+                .overlay(
+                    Image(systemName: "person.fill")
+                        .font(.system(size: 8))
+                        .foregroundStyle(.white))
+            VStack(alignment: .leading, spacing: 1) {
+                Text(friend.displayName)
+                    .font(.system(size: 9, weight: .medium))
+                    .foregroundStyle(isHighlighted && blinkOn ? Color(red: 0.4, green: 0.6, blue: 1.0) : .blue)
+                    .lineLimit(1)
+                if settings.showDistanceAndLocation {
+                    if let distance = getFriendDistance(friend) {
+                        Text(distance)
+                            .font(.system(size: 8))
+                            .foregroundStyle(.white.opacity(0.6))
+                    }
+                    if let location = getFriendLocation(friend) {
+                        Text(location)
+                            .font(.system(size: 7))
+                            .foregroundStyle(.white.opacity(0.5))
+                            .lineLimit(1)
+                    }
+                }
+            }
+            Spacer()
+        }
+        .padding(.vertical, 2)
+        .padding(.horizontal, 4)
+        .background(
+            isHighlighted && blinkOn
+                ? RoundedRectangle(cornerRadius: 6).fill(Color(red: 0.4, green: 0.6, blue: 1.0).opacity(0.2))
+                : nil
+        )
+        .onChange(of: isHighlighted) { _, highlighted in
+            if highlighted {
+                blinkOn = true
+            }
+        }
+        .onAppear {
+            guard isHighlighted else { return }
+            blinkOn = true
+        }
+        .onReceive(Timer.publish(every: 0.6, on: .main, in: .common).autoconnect()) { _ in
+            guard isHighlighted else {
+                blinkOn = true
+                return
+            }
+            blinkOn.toggle()
+        }
     }
 }
 
