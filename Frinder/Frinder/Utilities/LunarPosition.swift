@@ -15,7 +15,7 @@ enum LunarPosition {
 
         switch age {
         case 0..<1.85, 27.7..<29.53:
-            return nil // new moon — don't draw
+            return "moon-new"
         case 1.85..<5.5:
             return "moon-crescent-waxing"
         case 5.5..<9.2:

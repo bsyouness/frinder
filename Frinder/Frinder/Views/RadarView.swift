@@ -16,7 +16,7 @@ struct RadarView: View {
 
                 if !radarViewModel.isLocationAuthorized {
                     if radarViewModel.locationAuthorizationStatus == .notDetermined {
-                        PrePermissionView(onRequestPermission: {
+                        PrePermissionView(onReque stPermission: {
                             radarViewModel.requestLocationAuthorization()
                         })
                     } else {
@@ -672,15 +672,28 @@ struct EarthView: View {
                 }
             }
 
-            // Moon (world-projected image, ~120pt)
+            // Moon (world-projected image, ~90pt)
             if let mp = moonPosition, let moonName = moonImageName {
-                let resolvedMoon = context.resolve(Image(moonName))
-                let moonSize: CGFloat = 120
-                let aspect = resolvedMoon.size.width / max(resolvedMoon.size.height, 1)
-                let w = moonSize * aspect
-                let h = moonSize
-                let rect = CGRect(x: mp.x - w / 2, y: mp.y - h / 2, width: w, height: h)
-                context.draw(resolvedMoon, in: rect)
+                let moonSize: CGFloat = 90
+                if moonName == "moon-new" {
+                    // Inverted full moon for new moon
+                    let resolvedMoon = context.resolve(Image("moon-full"))
+                    let aspect = resolvedMoon.size.width / max(resolvedMoon.size.height, 1)
+                    let w = moonSize * aspect
+                    let h = moonSize
+                    let rect = CGRect(x: mp.x - w / 2, y: mp.y - h / 2, width: w, height: h)
+                    context.drawLayer { ctx in
+                        ctx.addFilter(.colorInvert())
+                        ctx.draw(resolvedMoon, in: rect)
+                    }
+                } else {
+                    let resolvedMoon = context.resolve(Image(moonName))
+                    let aspect = resolvedMoon.size.width / max(resolvedMoon.size.height, 1)
+                    let w = moonSize * aspect
+                    let h = moonSize
+                    let rect = CGRect(x: mp.x - w / 2, y: mp.y - h / 2, width: w, height: h)
+                    context.draw(resolvedMoon, in: rect)
+                }
             }
 
             // Clouds (day only, world-projected, skip any that overlap the sun)
