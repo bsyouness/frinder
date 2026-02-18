@@ -60,15 +60,6 @@ struct RadarView: View {
                                 .zIndex(expandedClusterId == cluster.id ? 1 : 0)
                             }
                         }
-                        .onChange(of: radarViewModel.targetFriend?.id) { _, targetId in
-                            guard let targetId else { return }
-                            if let cluster = clusters.first(where: { $0.friends.contains(where: { $0.id == targetId }) }),
-                               !cluster.isSingle {
-                                withAnimation(.easeInOut(duration: 0.2)) {
-                                    expandedClusterId = cluster.id
-                                }
-                            }
-                        }
 
                         // Friend dots - skip friends that are part of mixed clusters
                         ForEach(radarViewModel.visibleFriends) { friend in
@@ -128,6 +119,20 @@ struct RadarView: View {
                         }
                     }
                 }
+
+                // Auto-expand cluster containing targeted friend
+                Color.clear
+                    .frame(width: 0, height: 0)
+                    .onChange(of: radarViewModel.targetFriend?.id) { _, targetId in
+                        guard let targetId else { return }
+                        let clusters = radarViewModel.clusterLandmarks(in: geometry.size)
+                        if let cluster = clusters.first(where: { $0.friends.contains(where: { $0.id == targetId }) }),
+                           !cluster.isSingle {
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                expandedClusterId = cluster.id
+                            }
+                        }
+                    }
 
                 // Compass indicator at top
                 VStack {
