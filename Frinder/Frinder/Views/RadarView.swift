@@ -11,7 +11,7 @@ struct RadarView: View {
         GeometryReader { geometry in
             ZStack {
                 // Background: sky color (day) or black (night)
-                (radarViewModel.isDaytime ? Color(red: 0.55, green: 0.75, blue: 0.95) : Color.black)
+                (radarViewModel.isDaytime ? Color(red: 0.55, green: 0.75, blue: 0.95) : Color(red: 0.0, green: 0.18, blue: 0.42))
                     .ignoresSafeArea()
 
                 if !radarViewModel.isLocationAuthorized {
