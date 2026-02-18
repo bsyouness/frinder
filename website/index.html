@@ -9,105 +9,127 @@
     <meta property="og:description" content="Point your phone and see where your friends are. AR-powered friend radar for iOS.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://frinder.me">
+    <link rel="icon" type="image/jpeg" href="assets/frinder-icon.jpg">
+    <link rel="apple-touch-icon" href="assets/frinder-icon.jpg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background: #000;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             color: #fff;
-            min-height: 100vh;
             overflow-x: hidden;
         }
 
-        .hero {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            padding: 60px 24px;
-            position: relative;
+        /* ════════════════════════════════════════
+           SKY BACKGROUND — scrolls from day to night
+           ════════════════════════════════════════ */
+        .sky-bg {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: -2;
+            transition: background 0.05s linear;
         }
 
-        /* Subtle green glow at bottom to mirror the app */
-        .hero::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 40%;
-            background: radial-gradient(ellipse at 50% 100%, rgba(34, 139, 34, 0.08) 0%, transparent 70%);
+        /* ── Celestial objects layer ── */
+        .celestial {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
             pointer-events: none;
+            z-index: -1;
+            overflow: hidden;
         }
 
-        .content {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 80px;
-            max-width: 1100px;
-            width: 100%;
+        .celestial img {
+            position: absolute;
+            transition: opacity 0.3s;
+        }
+
+        /* Sun & Moon centered at same spot in top-right area */
+        .cel-sun {
+            width: 800px;
+            top: -100px;
+            right: -100px;
+        }
+
+        .cel-moon {
+            width: 190px;
+            top: 55px;
+            right: 195px;
+            opacity: 0;
+            transition: opacity 0.6s ease;
+        }
+
+        /* Clouds */
+        .cel-cloud {
+            opacity: 0.9;
+        }
+
+        /* Stars */
+        .cel-star {
+            opacity: 0;
+        }
+
+        /* ════════════════════════════════════════
+           CONTENT
+           ════════════════════════════════════════ */
+        section {
             position: relative;
             z-index: 1;
         }
 
-        .text-side {
-            flex: 1;
-            max-width: 480px;
-        }
-
-        .app-icon {
-            width: 72px;
-            height: 72px;
-            background: linear-gradient(135deg, #1a1a2e, #0d0d1a);
-            border-radius: 16px;
+        /* ── Hero ── */
+        .hero {
+            min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 36px;
-            margin-bottom: 24px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 80px 24px;
         }
 
-        h1 {
-            font-size: 56px;
-            font-weight: 700;
-            letter-spacing: -1px;
-            margin-bottom: 16px;
-        }
-
-        .tagline {
-            font-size: 22px;
-            color: rgba(255, 255, 255, 0.7);
-            line-height: 1.5;
-            margin-bottom: 40px;
-        }
-
-        .features {
-            list-style: none;
-            margin-bottom: 48px;
-        }
-
-        .features li {
+        .hero-inner {
             display: flex;
-            align-items: flex-start;
-            gap: 14px;
-            margin-bottom: 20px;
-            font-size: 17px;
-            color: rgba(255, 255, 255, 0.8);
-            line-height: 1.5;
+            align-items: center;
+            gap: 72px;
+            max-width: 1100px;
+            width: 100%;
         }
 
-        .features li .icon {
-            font-size: 22px;
-            flex-shrink: 0;
-            margin-top: 1px;
+        .hero-text {
+            flex: 1;
+            max-width: 500px;
+        }
+
+        .hero-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 20px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+            margin-bottom: 24px;
+        }
+
+        .hero-title {
+            font-size: 64px;
+            font-weight: 800;
+            letter-spacing: -2px;
+            line-height: 1;
+            margin-bottom: 20px;
+        }
+
+        .hero-tagline {
+            font-size: 20px;
+            line-height: 1.6;
+            color: rgba(255,255,255,0.85);
+            margin-bottom: 40px;
+            max-width: 420px;
         }
 
         .app-store-btn {
@@ -117,33 +139,33 @@
             background: #fff;
             color: #000;
             text-decoration: none;
-            padding: 14px 32px;
-            border-radius: 12px;
-            font-size: 18px;
+            padding: 16px 36px;
+            border-radius: 16px;
+            font-size: 17px;
             font-weight: 600;
-            transition: transform 0.2s, opacity 0.2s;
+            font-family: inherit;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            transition: transform 0.2s, box-shadow 0.2s;
         }
 
         .app-store-btn:hover {
-            transform: scale(1.03);
-            opacity: 0.93;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
         }
 
-        .app-store-btn svg {
-            width: 24px;
-            height: 24px;
-        }
+        .app-store-btn svg { width: 22px; height: 22px; }
 
-        .coming-soon {
+        .coming-soon-label {
             display: block;
-            margin-top: 8px;
-            font-size: 13px;
-            font-weight: 400;
-            color: rgba(255, 255, 255, 0.4);
+            margin-top: 12px;
+            font-size: 14px;
+            color: rgba(255,255,255,0.5);
         }
 
         /* Phone mockup */
-        .phone-side {
+        .hero-phone {
             flex-shrink: 0;
             position: relative;
         }
@@ -152,11 +174,10 @@
             width: 280px;
             height: 572px;
             border-radius: 40px;
-            border: 4px solid rgba(255, 255, 255, 0.15);
+            border: 3px solid rgba(255,255,255,0.2);
             overflow: hidden;
             background: #000;
-            box-shadow: 0 40px 80px rgba(0, 0, 0, 0.5);
-            position: relative;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.4);
         }
 
         .phone-frame img {
@@ -165,7 +186,6 @@
             object-fit: cover;
         }
 
-        /* Notch */
         .phone-frame::before {
             content: '';
             position: absolute;
@@ -179,144 +199,563 @@
             z-index: 2;
         }
 
-        /* Star dots background */
-        .stars {
+        /* ── Section heading ── */
+        .section-heading {
+            font-size: 44px;
+            font-weight: 800;
+            letter-spacing: -1px;
+            text-align: center;
+            margin-bottom: 16px;
+        }
+
+        .section-subtitle {
+            font-size: 18px;
+            color: rgba(255,255,255,0.6);
+            text-align: center;
+            margin-bottom: 56px;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* ── Screenshots showcase ── */
+        .screenshots {
+            padding: 100px 24px;
+        }
+
+        .screenshots-scroll {
+            display: flex;
+            gap: 24px;
+            max-width: 1200px;
+            margin: 0 auto;
+            justify-content: center;
+            flex-wrap: wrap;
+            padding: 20px 0;
+        }
+
+        .screenshot-item {
+            flex: 0 0 260px;
+            scroll-snap-align: center;
+        }
+
+        .screenshot-item img {
+            width: 260px;
+            height: 530px;
+            object-fit: cover;
+            border-radius: 32px;
+            border: 2px solid rgba(255,255,255,0.15);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            transition: transform 0.3s;
+        }
+
+        .screenshot-item img:hover {
+            transform: scale(1.03);
+        }
+
+        .screenshot-item .caption {
+            text-align: center;
+            margin-top: 16px;
+            font-size: 15px;
+            font-weight: 500;
+            color: rgba(255,255,255,0.6);
+        }
+
+        /* ── Features grid ── */
+        .features {
+            padding: 100px 24px;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .feature-card {
+            padding: 32px 28px;
+            border-radius: 20px;
+            background: rgba(255,255,255,0.06);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: transform 0.2s, background 0.2s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-4px);
+            background: rgba(255,255,255,0.1);
+        }
+
+        .feature-card .emoji {
+            font-size: 32px;
+            margin-bottom: 14px;
+            display: block;
+        }
+
+        .feature-card h3 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .feature-card p {
+            font-size: 15px;
+            line-height: 1.6;
+            color: rgba(255,255,255,0.7);
+        }
+
+        /* ── Coming soon ── */
+        .coming-soon {
+            padding: 100px 24px;
+        }
+
+        .cs-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .cs-card {
+            padding: 24px 22px;
+            border-radius: 16px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            transition: background 0.2s;
+        }
+
+        .cs-card:hover {
+            background: rgba(255,255,255,0.08);
+        }
+
+        .cs-card .emoji {
+            font-size: 24px;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .cs-card h3 {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .cs-card p {
+            font-size: 14px;
+            line-height: 1.5;
+            color: rgba(255,255,255,0.55);
+        }
+
+        /* ── Footer ── */
+        footer {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            padding: 32px 24px;
+            font-size: 14px;
+            color: rgba(255,255,255,0.35);
+            border-top: 1px solid rgba(255,255,255,0.08);
+        }
+
+        footer a {
+            color: rgba(255,255,255,0.45);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        footer a:hover { color: rgba(255,255,255,0.8); }
+
+        /* ── Navigation ── */
+        .site-nav {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
-            height: 60%;
-            pointer-events: none;
-            z-index: 0;
+            z-index: 100;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            gap: 32px;
+            transition: background 0.3s, box-shadow 0.3s;
         }
 
-        .star {
-            position: absolute;
-            background: #fff;
-            border-radius: 50%;
+        .site-nav.scrolled {
+            background: rgba(0,0,0,0.45);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            box-shadow: 0 1px 0 rgba(255,255,255,0.06);
         }
 
-        footer {
-            text-align: center;
-            padding: 32px 24px;
-            color: rgba(255, 255, 255, 0.3);
-            font-size: 14px;
-            position: relative;
-            z-index: 1;
-        }
-
-        footer a {
-            color: rgba(255, 255, 255, 0.4);
+        .site-nav .nav-logo {
+            font-size: 18px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            color: #fff;
             text-decoration: none;
         }
 
-        footer a:hover {
-            color: rgba(255, 255, 255, 0.6);
+        .site-nav .nav-links {
+            display: flex;
+            gap: 24px;
+            list-style: none;
         }
 
-        /* Responsive */
+        .site-nav .nav-links a {
+            color: rgba(255,255,255,0.7);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .site-nav .nav-links a:hover {
+            color: #fff;
+        }
+
+        /* ── Entrance animations ── */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.7s ease-out, transform 0.7s ease-out;
+        }
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* ── Responsive ── */
         @media (max-width: 860px) {
-            .content {
+            .hero-inner {
                 flex-direction: column-reverse;
                 gap: 48px;
-            }
-
-            .text-side {
                 text-align: center;
-                max-width: 100%;
             }
+            .hero-text { max-width: 100%; }
+            .hero-tagline { margin-left: auto; margin-right: auto; }
+            .hero-icon { margin-left: auto; margin-right: auto; }
+            .hero-title { font-size: 48px; }
+            .phone-frame { width: 240px; height: 490px; border-radius: 34px; }
+            .features-grid { grid-template-columns: 1fr; }
+            .cs-grid { grid-template-columns: 1fr 1fr; }
+            .section-heading { font-size: 34px; }
+            .cel-sun { width: 500px; top: -60px; right: -60px; }
+            .cel-moon { width: 500px; top: -60px; right: 500px; }
+        }
 
-            .app-icon {
-                margin-left: auto;
-                margin-right: auto;
-            }
-
-            h1 {
-                font-size: 40px;
-            }
-
-            .tagline {
-                font-size: 19px;
-            }
-
-            .features {
-                display: inline-block;
-                text-align: left;
-            }
-
-            .phone-frame {
-                width: 240px;
-                height: 490px;
-                border-radius: 34px;
-            }
+        @media (max-width: 480px) {
+            .hero-title { font-size: 38px; }
+            .hero-tagline { font-size: 17px; }
+            .cs-grid { grid-template-columns: 1fr; }
+            .section-heading { font-size: 28px; }
+            .screenshot-item { flex: 0 0 220px; }
+            .screenshot-item img { width: 220px; height: 450px; border-radius: 28px; }
         }
     </style>
 </head>
 <body>
-    <!-- Background stars -->
-    <div class="stars" id="stars"></div>
 
-    <section class="hero">
-        <div class="content">
-            <div class="text-side">
-                <div class="app-icon">
-                    <img src="appicon.png" alt="Frinder app icon" width="72" height="72" style="border-radius: 16px; box-shadow: 0 0 20px rgba(255,255,255,0.3), 0 0 40px rgba(255,255,255,0.1);">
-                </div>
-                <h1>Frinder</h1>
-                <p class="tagline">Point your phone and see where your friends are. An AR-powered radar that shows friends and landmarks around you in real time.</p>
+<!-- Navigation -->
+<nav class="site-nav" id="siteNav">
+    <a href="#hero" class="nav-logo">Frinder</a>
+    <ul class="nav-links">
+        <li><a href="#screenshots">Screenshots</a></li>
+        <li><a href="#features">Features</a></li>
+        <li><a href="#coming-soon">Coming Soon</a></li>
+    </ul>
+</nav>
 
-                <ul class="features">
-                    <li>
-                        <span class="icon">&#x1F4E1;</span>
-                        <span>See friends on a live radar &mdash; just point your phone in their direction</span>
-                    </li>
-                    <li>
-                        <span class="icon">&#x1F5FA;</span>
-                        <span>Discover nearby landmarks like mountains, waterfalls, and monuments</span>
-                    </li>
-                    <li>
-                        <span class="icon">&#x1F30C;</span>
-                        <span>Day and night sky visuals with real-time compass and horizon line</span>
-                    </li>
-                    <li>
-                        <span class="icon">&#x1F464;</span>
-                        <span>Add friends, share your location, and find each other instantly</span>
-                    </li>
-                </ul>
+<!-- Sky background -->
+<div class="sky-bg" id="skyBg"></div>
 
-                <a href="#" class="app-store-btn" onclick="return false;">
-                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5C17.88 20.74 17 21.95 15.66 21.97C14.32 22 13.89 21.18 12.37 21.18C10.84 21.18 10.37 21.95 9.1 22C7.79 22.05 6.8 20.68 5.96 19.47C4.25 16.56 2.93 11.3 4.7 7.72C5.57 5.94 7.36 4.86 9.28 4.84C10.56 4.81 11.78 5.72 12.55 5.72C13.31 5.72 14.79 4.62 16.34 4.81C17.03 4.84 18.83 5.09 19.97 6.81C19.86 6.88 17.56 8.21 17.58 11.04C17.61 14.37 20.46 15.46 20.49 15.47C20.46 15.56 20.01 17.12 18.71 19.5ZM13 3.5C13.73 2.67 14.94 2.04 15.94 2C16.07 3.17 15.6 4.35 14.9 5.19C14.21 6.04 13.07 6.7 11.95 6.61C11.8 5.46 12.36 4.26 13 3.5Z"/></svg>
-                    Download on the App Store
-                </a>
-                <span class="coming-soon">Coming soon</span>
-            </div>
+<!-- Celestial objects -->
+<div class="celestial" id="celestial">
+    <!-- Sun -->
+    <img src="assets/sun.png" class="cel-sun" id="celSun" alt="">
 
-            <div class="phone-side">
-                <div class="phone-frame">
-                    <img src="screenshot.jpg" alt="Frinder app showing friends and landmarks on an AR radar view">
-                </div>
+    <!-- Clouds -->
+    <img src="assets/cloud1.png" class="cel-cloud" style="width:280px;top:30px;left:-30px;" alt="">
+    <img src="assets/cloud2.png" class="cel-cloud" style="width:200px;top:120px;right:60px;" alt="">
+    <img src="assets/cloud3.png" class="cel-cloud" style="width:240px;top:220px;left:15%;" alt="">
+    <img src="assets/cloud4.png" class="cel-cloud" style="width:180px;top:160px;right:25%;" alt="">
+    <img src="assets/cloud5.png" class="cel-cloud" style="width:260px;top:320px;right:5%;" alt="">
+    <img src="assets/cloud1.png" class="cel-cloud" style="width:200px;top:280px;left:5%;" alt="">
+
+    <!-- Stars (hidden at top, appear as you scroll) — 3x size, 3x count -->
+    <!-- Row 1 -->
+    <img src="assets/star1.png" class="cel-star" style="width:60px;top:8%;left:10%;" alt="">
+    <img src="assets/star2.png" class="cel-star" style="width:48px;top:12%;right:18%;" alt="">
+    <img src="assets/star3.png" class="cel-star" style="width:72px;top:18%;left:65%;" alt="">
+    <img src="assets/star4.png" class="cel-star" style="width:42px;top:15%;left:30%;" alt="">
+    <img src="assets/star5.png" class="cel-star" style="width:54px;top:22%;right:12%;" alt="">
+    <img src="assets/star1.png" class="cel-star" style="width:36px;top:25%;left:20%;" alt="">
+    <img src="assets/star3.png" class="cel-star" style="width:66px;top:28%;right:30%;" alt="">
+    <img src="assets/star2.png" class="cel-star" style="width:45px;top:32%;left:45%;" alt="">
+    <img src="assets/star5.png" class="cel-star" style="width:60px;top:35%;left:8%;" alt="">
+    <img src="assets/star4.png" class="cel-star" style="width:51px;top:38%;right:15%;" alt="">
+    <img src="assets/star1.png" class="cel-star" style="width:39px;top:42%;left:55%;" alt="">
+    <img src="assets/star3.png" class="cel-star" style="width:57px;top:45%;right:40%;" alt="">
+    <!-- Row 2 -->
+    <img src="assets/star4.png" class="cel-star" style="width:50px;top:10%;left:48%;" alt="">
+    <img src="assets/star5.png" class="cel-star" style="width:40px;top:20%;right:5%;" alt="">
+    <img src="assets/star1.png" class="cel-star" style="width:55px;top:30%;left:3%;" alt="">
+    <img src="assets/star2.png" class="cel-star" style="width:65px;top:40%;right:22%;" alt="">
+    <img src="assets/star3.png" class="cel-star" style="width:45px;top:48%;left:38%;" alt="">
+    <img src="assets/star4.png" class="cel-star" style="width:58px;top:52%;right:8%;" alt="">
+    <img src="assets/star5.png" class="cel-star" style="width:42px;top:58%;left:15%;" alt="">
+    <img src="assets/star1.png" class="cel-star" style="width:52px;top:62%;right:35%;" alt="">
+    <img src="assets/star2.png" class="cel-star" style="width:48px;top:68%;left:60%;" alt="">
+    <img src="assets/star3.png" class="cel-star" style="width:55px;top:72%;left:25%;" alt="">
+    <img src="assets/star4.png" class="cel-star" style="width:62px;top:78%;right:45%;" alt="">
+    <img src="assets/star5.png" class="cel-star" style="width:44px;top:82%;left:5%;" alt="">
+    <!-- Row 3 -->
+    <img src="assets/star2.png" class="cel-star" style="width:50px;top:5%;right:42%;" alt="">
+    <img src="assets/star4.png" class="cel-star" style="width:38px;top:16%;left:82%;" alt="">
+    <img src="assets/star1.png" class="cel-star" style="width:60px;top:26%;right:55%;" alt="">
+    <img src="assets/star5.png" class="cel-star" style="width:46px;top:34%;left:75%;" alt="">
+    <img src="assets/star3.png" class="cel-star" style="width:54px;top:44%;left:90%;" alt="">
+    <img src="assets/star2.png" class="cel-star" style="width:42px;top:55%;right:60%;" alt="">
+    <img src="assets/star1.png" class="cel-star" style="width:58px;top:65%;left:70%;" alt="">
+    <img src="assets/star4.png" class="cel-star" style="width:48px;top:75%;right:2%;" alt="">
+    <img src="assets/star5.png" class="cel-star" style="width:52px;top:85%;left:42%;" alt="">
+    <img src="assets/star3.png" class="cel-star" style="width:44px;top:88%;right:20%;" alt="">
+    <img src="assets/star1.png" class="cel-star" style="width:56px;top:92%;left:12%;" alt="">
+    <img src="assets/star2.png" class="cel-star" style="width:50px;top:95%;right:50%;" alt="">
+
+    <!-- Moon -->
+    <img src="assets/moon-full.png" class="cel-moon" id="celMoon" alt="">
+</div>
+
+
+<!-- ═══════════ HERO ═══════════ -->
+<section class="hero" id="hero">
+    <div class="hero-inner">
+        <div class="hero-text">
+            <img src="assets/frinder-icon.jpg" alt="Frinder" class="hero-icon">
+            <h1 class="hero-title">Frinder</h1>
+            <p class="hero-tagline">Point your phone and see where your friends are. An AR-powered radar that shows friends and landmarks around you in real time.</p>
+            <a href="#" class="app-store-btn" onclick="return false;">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5C17.88 20.74 17 21.95 15.66 21.97C14.32 22 13.89 21.18 12.37 21.18C10.84 21.18 10.37 21.95 9.1 22C7.79 22.05 6.8 20.68 5.96 19.47C4.25 16.56 2.93 11.3 4.7 7.72C5.57 5.94 7.36 4.86 9.28 4.84C10.56 4.81 11.78 5.72 12.55 5.72C13.31 5.72 14.79 4.62 16.34 4.81C17.03 4.84 18.83 5.09 19.97 6.81C19.86 6.88 17.56 8.21 17.58 11.04C17.61 14.37 20.46 15.46 20.49 15.47C20.46 15.56 20.01 17.12 18.71 19.5ZM13 3.5C13.73 2.67 14.94 2.04 15.94 2C16.07 3.17 15.6 4.35 14.9 5.19C14.21 6.04 13.07 6.7 11.95 6.61C11.8 5.46 12.36 4.26 13 3.5Z"/></svg>
+                Download on the App Store
+            </a>
+            <span class="coming-soon-label">Coming soon</span>
+        </div>
+        <div class="hero-phone">
+            <div class="phone-frame">
+                <img src="assets/friend-dot-daytime.jpg" alt="Frinder AR radar showing a friend">
             </div>
         </div>
-    </section>
+    </div>
+</section>
 
-    <footer>
-        &copy; 2025 Frinder &middot; <a href="/privacy.html">Privacy Policy</a> &middot; <a href="/terms.html">Terms of Use</a> &middot; <a href="mailto:contact@frinder.me">Contact</a>
-    </footer>
 
-    <script>
-        // Generate background stars
-        const starsEl = document.getElementById('stars');
-        for (let i = 0; i < 60; i++) {
-            const star = document.createElement('div');
-            star.className = 'star';
-            const size = Math.random() * 2 + 1;
-            star.style.width = size + 'px';
-            star.style.height = size + 'px';
-            star.style.left = Math.random() * 100 + '%';
-            star.style.top = Math.random() * 100 + '%';
-            star.style.opacity = Math.random() * 0.4 + 0.1;
-            starsEl.appendChild(star);
+<!-- ═══════════ SCREENSHOTS ═══════════ -->
+<section class="screenshots reveal" id="screenshots">
+    <h2 class="section-heading">See It in Action</h2>
+    <p class="section-subtitle">From daytime clouds to nighttime stars, Frinder shows you the world around you.</p>
+    <div class="screenshots-scroll">
+        <div class="screenshot-item">
+            <img src="assets/friend-dot-daytime.jpg" alt="Friend dot on daytime radar">
+            <div class="caption">Find friends nearby</div>
+        </div>
+        <div class="screenshot-item">
+            <img src="assets/friend-list-daytime.jpg" alt="Landmarks and friends list">
+            <div class="caption">Landmarks &amp; friends</div>
+        </div>
+        <div class="screenshot-item">
+            <img src="assets/friends.jpg" alt="Friends list">
+            <div class="caption">Your friend list</div>
+        </div>
+        <div class="screenshot-item">
+            <img src="assets/night-radar.jpg" alt="Night radar with stars">
+            <div class="caption">Night mode</div>
+        </div>
+    </div>
+</section>
+
+
+<!-- ═══════════ FEATURES ═══════════ -->
+<section class="features reveal" id="features">
+    <h2 class="section-heading">Features</h2>
+    <p class="section-subtitle">Everything you need to stay connected with the people around you.</p>
+    <div class="features-grid">
+        <div class="feature-card">
+            <span class="emoji">&#x1F4E1;</span>
+            <h3>Live AR Radar</h3>
+            <p>See friends on a live radar &mdash; just point your phone in their direction</p>
+        </div>
+        <div class="feature-card">
+            <span class="emoji">&#x1F5FA;</span>
+            <h3>Landmark Discovery</h3>
+            <p>Discover nearby landmarks like mountains, waterfalls, and monuments</p>
+        </div>
+        <div class="feature-card">
+            <span class="emoji">&#x1F30C;</span>
+            <h3>Day &amp; Night Sky</h3>
+            <p>Real-time sky with sun, moon, stars, clouds, compass, and horizon line</p>
+        </div>
+        <div class="feature-card">
+            <span class="emoji">&#x1F464;</span>
+            <h3>Find Friends Instantly</h3>
+            <p>Add friends, share your location, and find each other in seconds</p>
+        </div>
+    </div>
+</section>
+
+
+<!-- ═══════════ COMING SOON ═══════════ -->
+<section class="coming-soon reveal" id="coming-soon">
+    <h2 class="section-heading">Coming Soon</h2>
+    <p class="section-subtitle">We're just getting started. Here's what's next.</p>
+    <div class="cs-grid">
+        <div class="cs-card">
+            <span class="emoji">&#x1F5FA;</span>
+            <h3>Map Mode</h3>
+            <p>Toggle between the AR radar and a map view to see all your friends at a glance</p>
+        </div>
+        <div class="cs-card">
+            <span class="emoji">&#x1F44B;</span>
+            <h3>Check-in Nudge</h3>
+            <p>Let a friend know you're looking for them with a quick notification</p>
+        </div>
+        <div class="cs-card">
+            <span class="emoji">&#x1F4CD;</span>
+            <h3>Custom Pins</h3>
+            <p>Drop your own landmarks like your car, camp, or hotel on everyone's radar</p>
+        </div>
+        <div class="cs-card">
+            <span class="emoji">&#x1F465;</span>
+            <h3>Friend Groups</h3>
+            <p>Organize friends into groups like "Festival crew" or "Family" and filter your radar</p>
+        </div>
+        <div class="cs-card">
+            <span class="emoji">&#x1F4CF;</span>
+            <h3>Distance Alerts</h3>
+            <p>Get notified when a friend is within a certain distance of you</p>
+        </div>
+        <div class="cs-card">
+            <span class="emoji">&#x1F3C3;</span>
+            <h3>Activity Status</h3>
+            <p>See if a friend is walking, driving, or stationary so you know if they're on their way</p>
+        </div>
+        <div class="cs-card">
+            <span class="emoji">&#x1F4F8;</span>
+            <h3>Share Your View</h3>
+            <p>Screenshot or record your radar view and share it with friends</p>
+        </div>
+        <div class="cs-card">
+            <span class="emoji">&#x1F43E;</span>
+            <h3>Offline Breadcrumbs</h3>
+            <p>See the last known path a friend took when they go offline</p>
+        </div>
+        <div class="cs-card">
+            <span class="emoji">&#x1F4F1;</span>
+            <h3>Home Screen Widgets</h3>
+            <p>See your nearest friends and their distance right from your home screen</p>
+        </div>
+    </div>
+</section>
+
+
+<!-- ═══════════ FOOTER ═══════════ -->
+<footer>
+    &copy; 2025 Frinder &middot; <a href="/privacy.html">Privacy Policy</a> &middot; <a href="/terms.html">Terms of Use</a> &middot; <a href="mailto:contact@frinder.me">Contact</a>
+</footer>
+
+
+<script>
+const skyBg = document.getElementById('skyBg');
+const celSun = document.getElementById('celSun');
+const celMoon = document.getElementById('celMoon');
+const clouds = document.querySelectorAll('.cel-cloud');
+const stars = document.querySelectorAll('.cel-star');
+const siteNav = document.getElementById('siteNav');
+
+// Day colors
+const dayTop = [142, 178, 232];    // #8eb2e8
+const dayBot = [178, 210, 245];    // #b2d2f5
+// Night colors
+const nightTop = [10, 10, 46];     // #0a0a2e
+const nightBot = [13, 27, 62];     // #0d1b3e
+
+function lerp(a, b, t) { return a + (b - a) * t; }
+
+function lerpColor(c1, c2, t) {
+    return [
+        Math.round(lerp(c1[0], c2[0], t)),
+        Math.round(lerp(c1[1], c2[1], t)),
+        Math.round(lerp(c1[2], c2[2], t))
+    ];
+}
+
+function updateSky() {
+    const scrollY = window.scrollY;
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    const progress = Math.min(scrollY / docHeight, 1); // 0 = top (day), 1 = bottom (night)
+
+    // Nav background on scroll
+    siteNav.classList.toggle('scrolled', scrollY > 60);
+
+    // Sky gradient
+    const top = lerpColor(dayTop, nightTop, progress);
+    const bot = lerpColor(dayBot, nightBot, progress);
+    skyBg.style.background = `linear-gradient(180deg, rgb(${top.join(',')}) 0%, rgb(${bot.join(',')}) 100%)`;
+
+    // Sun & Moon crossfade: sun fades 1→0 over 20-50%, moon fades 0→1 over 30-55%
+    const sunOpacity = Math.max(0, Math.min(1, 1 - (progress - 0.2) / 0.3));
+    const moonOpacity = Math.max(0, Math.min(1, (progress - 0.3) / 0.25));
+    celSun.style.opacity = sunOpacity;
+    celMoon.style.opacity = moonOpacity;
+
+    // Clouds: visible at top, fade out by ~50% scroll
+    const cloudOpacity = Math.max(0, 1 - progress * 2.2);
+    clouds.forEach((cloud, i) => {
+        cloud.style.opacity = cloudOpacity * 0.9;
+        const drift = Math.sin(Date.now() / 4000 + i * 1.5) * 10;
+        const sinkY = progress * (80 + i * 20);
+        cloud.style.transform = `translateX(${drift}px) translateY(${sinkY}px)`;
+    });
+
+    // Stars: invisible at top, appear after ~30% scroll
+    const starOpacity = Math.max(0, Math.min(1, (progress - 0.3) * 2.5));
+    stars.forEach((star, i) => {
+        const twinkle = 0.4 + 0.6 * Math.abs(Math.sin(Date.now() / 1500 + i * 2));
+        star.style.opacity = starOpacity * twinkle;
+    });
+}
+
+// Run sky update on scroll + animation frame for smooth twinkle
+let ticking = false;
+window.addEventListener('scroll', () => {
+    if (!ticking) {
+        requestAnimationFrame(() => {
+            updateSky();
+            ticking = false;
+        });
+        ticking = true;
+    }
+}, { passive: true });
+
+// Also run a gentle animation loop for cloud drift & star twinkle
+function animLoop() {
+    updateSky();
+    requestAnimationFrame(animLoop);
+}
+animLoop();
+
+// ── Intersection observer for reveals ──
+const reveals = document.querySelectorAll('.reveal');
+const obs = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+        if (e.isIntersecting) {
+            e.target.classList.add('visible');
+            obs.unobserve(e.target);
         }
-    </script>
+    });
+}, { threshold: 0.1 });
+reveals.forEach(el => obs.observe(el));
+</script>
 </body>
 </html>
