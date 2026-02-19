@@ -194,33 +194,89 @@
             position: relative;
         }
 
-        .phone-frame {
-            width: 280px;
-            height: 572px;
-            border-radius: 40px;
-            border: 3px solid rgba(255, 255, 255, 0.2);
-            overflow: hidden;
-            background: #000;
-            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4);
+        /* ── Realistic iPhone shell ── */
+        .phone-shell {
+            position: relative;
+            background: linear-gradient(160deg, #56536b 0%, #1e1c2e 60%, #161525 100%);
+            border-radius: 50px;
+            padding: 12px;
+            box-shadow:
+                0 0 0 1px rgba(255, 255, 255, 0.13),
+                inset 0 1px 0 rgba(255, 255, 255, 0.08),
+                0 40px 80px rgba(0, 0, 0, 0.65);
         }
 
-        .phone-frame img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .phone-frame::before {
+        /* Volume buttons */
+        .phone-shell::before {
             content: '';
             position: absolute;
-            top: 0;
+            left: -3px;
+            top: 108px;
+            width: 3px;
+            height: 28px;
+            background: #3a3849;
+            border-radius: 2px 0 0 2px;
+            box-shadow: 0 40px 0 #3a3849, 0 78px 0 #3a3849;
+        }
+
+        /* Power button */
+        .phone-shell::after {
+            content: '';
+            position: absolute;
+            right: -3px;
+            top: 138px;
+            width: 3px;
+            height: 62px;
+            background: #3a3849;
+            border-radius: 0 2px 2px 0;
+        }
+
+        .phone-screen {
+            position: relative;
+            border-radius: 40px;
+            overflow: hidden;
+            background: #000;
+            line-height: 0;
+        }
+
+        .phone-screen img {
+            width: 100%;
+            display: block;
+        }
+
+        .phone-dynamic-island {
+            position: absolute;
+            top: 12px;
             left: 50%;
             transform: translateX(-50%);
-            width: 120px;
-            height: 28px;
+            width: 95px;
+            height: 30px;
             background: #000;
-            border-radius: 0 0 18px 18px;
-            z-index: 2;
+            border-radius: 20px;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .phone-home-bar {
+            position: absolute;
+            bottom: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 35%;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.55);
+            border-radius: 3px;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .hero-phone-shell {
+            width: 280px;
+        }
+
+        .hero-phone-shell .phone-screen img {
+            height: 548px;
+            object-fit: cover;
         }
 
         /* ── Section heading ── */
@@ -258,22 +314,21 @@
         }
 
         .screenshot-item {
-            flex: 0 0 260px;
+            flex: 0 0 240px;
             scroll-snap-align: center;
         }
 
-        .screenshot-item img {
-            width: 260px;
-            height: 530px;
-            object-fit: cover;
-            border-radius: 32px;
-            border: 2px solid rgba(255, 255, 255, 0.15);
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+        .screenshot-item .phone-shell {
             transition: transform 0.3s;
         }
 
-        .screenshot-item img:hover {
+        .screenshot-item .phone-shell:hover {
             transform: scale(1.03);
+        }
+
+        .screenshot-item .phone-screen img {
+            height: 492px;
+            object-fit: cover;
         }
 
         .screenshot-item .caption {
@@ -510,6 +565,22 @@
                 top: 40px;
                 right: 130px;
             }
+
+            .hero-phone-shell {
+                width: 240px;
+            }
+
+            .hero-phone-shell .phone-screen img {
+                height: 466px;
+            }
+
+            .screenshot-item {
+                flex: 0 0 200px;
+            }
+
+            .screenshot-item .phone-screen img {
+                height: 410px;
+            }
         }
 
         @media (max-width: 480px) {
@@ -529,15 +600,6 @@
                 font-size: 28px;
             }
 
-            .screenshot-item {
-                flex: 0 0 220px;
-            }
-
-            .screenshot-item img {
-                width: 220px;
-                height: 450px;
-                border-radius: 28px;
-            }
         }
     </style>
 </head>
@@ -636,8 +698,12 @@
                 </div>
             </div>
             <div class="hero-phone">
-                <div class="phone-frame">
-                    <img src="assets/friend-dot-daytime.jpg" alt="Frinder AR radar showing a friend">
+                <div class="phone-shell hero-phone-shell">
+                    <div class="phone-screen">
+                        <div class="phone-dynamic-island"></div>
+                        <img src="assets/friend-dot-daytime.jpg" alt="Frinder AR radar showing a friend">
+                        <div class="phone-home-bar"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -650,19 +716,43 @@
         <p class="section-subtitle">From daytime clouds to nighttime stars, Frinder shows you the world around you.</p>
         <div class="screenshots-scroll">
             <div class="screenshot-item">
-                <img src="assets/friend-dot-daytime.jpg" alt="Friend dot on daytime radar">
+                <div class="phone-shell">
+                    <div class="phone-screen">
+                        <div class="phone-dynamic-island"></div>
+                        <img src="assets/friend-dot-daytime.jpg" alt="Friend dot on daytime radar">
+                        <div class="phone-home-bar"></div>
+                    </div>
+                </div>
                 <div class="caption">Find friends nearby</div>
             </div>
             <div class="screenshot-item">
-                <img src="assets/friend-list-daytime.jpg" alt="Landmarks and friends list">
+                <div class="phone-shell">
+                    <div class="phone-screen">
+                        <div class="phone-dynamic-island"></div>
+                        <img src="assets/friend-list-daytime.jpg" alt="Landmarks and friends list">
+                        <div class="phone-home-bar"></div>
+                    </div>
+                </div>
                 <div class="caption">Landmarks &amp; friends</div>
             </div>
             <div class="screenshot-item">
-                <img src="assets/friends.jpg" alt="Friends list">
+                <div class="phone-shell">
+                    <div class="phone-screen">
+                        <div class="phone-dynamic-island"></div>
+                        <img src="assets/friends.jpg" alt="Friends list">
+                        <div class="phone-home-bar"></div>
+                    </div>
+                </div>
                 <div class="caption">Your friend list</div>
             </div>
             <div class="screenshot-item">
-                <img src="assets/night-radar.jpg" alt="Night radar with stars">
+                <div class="phone-shell">
+                    <div class="phone-screen">
+                        <div class="phone-dynamic-island"></div>
+                        <img src="assets/night-radar.jpg" alt="Night radar with stars">
+                        <div class="phone-home-bar"></div>
+                    </div>
+                </div>
                 <div class="caption">Night mode</div>
             </div>
         </div>
