@@ -10,27 +10,29 @@ struct AuthView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 32) {
-                Spacer()
+            GeometryReader { geometry in
+                ScrollView {
+                    VStack(spacing: 32) {
+                        Spacer()
 
-                // App logo/title
-                VStack(spacing: 8) {
-                    Image(systemName: "dot.radiowaves.left.and.right")
-                        .font(.system(size: 60))
-                        .foregroundStyle(.blue)
+                        // App logo/title
+                        VStack(spacing: 8) {
+                            Image(systemName: "dot.radiowaves.left.and.right")
+                                .font(.system(size: 60))
+                                .foregroundStyle(.blue)
 
-                    Text("Frinder")
-                        .font(.largeTitle)
-                        .fontWeight(.bold)
+                            Text("Frinder")
+                                .font(.largeTitle)
+                                .fontWeight(.bold)
 
-                    Text("Find your friends")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
+                            Text("Find your friends")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
 
-                Spacer()
+                        Spacer()
 
-                // Form fields
+                        // Form fields
                 VStack(spacing: 16) {
                     if isSignUp {
                         TextField("Display Name", text: $displayName)
@@ -91,15 +93,17 @@ struct AuthView: View {
                         }
                     }
                 } label: {
-                    if authViewModel.isLoading {
-                        ProgressView()
-                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                    } else {
-                        Text(isSignUp ? "Sign Up" : "Sign In")
+                    Group {
+                        if authViewModel.isLoading {
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                        } else {
+                            Text(isSignUp ? "Sign Up" : "Sign In")
+                        }
                     }
+                    .frame(maxWidth: .infinity)
+                    .padding()
                 }
-                .frame(maxWidth: .infinity)
-                .padding()
                 .background(isFormValid ? Color.blue : Color.gray)
                 .foregroundStyle(.white)
                 .cornerRadius(10)
@@ -132,9 +136,9 @@ struct AuthView: View {
                         Text("Sign in with Google")
                             .font(.system(size: 14, weight: .medium))
                     }
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 40)
                 }
-                .frame(maxWidth: .infinity)
-                .frame(height: 40)
                 .background(Color.white)
                 .foregroundStyle(Color(red: 0x1f/255, green: 0x1f/255, blue: 0x1f/255))
                 .cornerRadius(4)
@@ -156,9 +160,13 @@ struct AuthView: View {
                         .font(.footnote)
                 }
 
-                Spacer()
+                        Spacer()
+                    }
+                    .padding()
+                    .frame(minHeight: geometry.size.height)
+                }
+                .scrollDismissesKeyboard(.interactively)
             }
-            .padding()
             .alert("Check Your Email", isPresented: $showResetAlert) {
                 Button("OK", role: .cancel) { }
             } message: {
