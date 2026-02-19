@@ -50,9 +50,12 @@ struct AuthView: View {
                         .autocapitalization(.none)
                         .autocorrectionDisabled()
 
-                    SecureField("Password", text: $password)
-                        .textFieldStyle(.roundedBorder)
-                        .textContentType(isSignUp ? .newPassword : .password)
+                    PasswordField(
+                        placeholder: "Password",
+                        text: $password,
+                        contentType: isSignUp ? .newPassword : .password
+                    )
+                    .frame(height: 36)
 
                     if !isSignUp {
                         HStack {

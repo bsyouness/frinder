@@ -63,8 +63,10 @@ struct EditProfileView: View {
             // MARK: Password (email/password users only)
             if authViewModel.isEmailPasswordUser {
                 Section("Change Password") {
-                    SecureField("New password", text: $newPassword)
-                    SecureField("Confirm password", text: $confirmPassword)
+                    PasswordField(placeholder: "New password", text: $newPassword, contentType: .newPassword)
+                        .frame(height: 36)
+                    PasswordField(placeholder: "Confirm password", text: $confirmPassword, contentType: .newPassword)
+                        .frame(height: 36)
                     Button {
                         Task { await changePassword() }
                     } label: {

@@ -38,6 +38,7 @@
 		000000000000000000000029 /* ImagePicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000024 /* ImagePicker.swift */; };
 		000000000000000000000030 /* EditProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000025 /* EditProfileView.swift */; };
 		000000000000000000000031 /* VerifyEmailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000026 /* VerifyEmailView.swift */; };
+		000000000000000000000032 /* PasswordField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000027 /* PasswordField.swift */; };
 		EF233E7F2F356929009EB732 /* GeoMath.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF233E7D2F356929009EB732 /* GeoMath.swift */; };
 		EF233E822F356929009EB732 /* SolarPosition.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF233E812F356929009EB732 /* SolarPosition.swift */; };
 		EF233E842F356929009EB732 /* LunarPosition.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF233E832F356929009EB732 /* LunarPosition.swift */; };
@@ -83,6 +84,7 @@
 		100000000000000000000024 /* ImagePicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImagePicker.swift; sourceTree = "<group>"; };
 		100000000000000000000025 /* EditProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditProfileView.swift; sourceTree = "<group>"; };
 		100000000000000000000026 /* VerifyEmailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VerifyEmailView.swift; sourceTree = "<group>"; };
+		100000000000000000000027 /* PasswordField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasswordField.swift; sourceTree = "<group>"; };
 		EF233E7D2F356929009EB732 /* GeoMath.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeoMath.swift; sourceTree = "<group>"; };
 		EF233E802F3683E8009EB732 /* Frinder.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Frinder.entitlements; sourceTree = "<group>"; };
 		EF233E812F356929009EB732 /* SolarPosition.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SolarPosition.swift; sourceTree = "<group>"; };
@@ -180,6 +182,7 @@
 				100000000000000000000024 /* ImagePicker.swift */,
 				100000000000000000000025 /* EditProfileView.swift */,
 				100000000000000000000026 /* VerifyEmailView.swift */,
+				100000000000000000000027 /* PasswordField.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -360,6 +363,7 @@
 				000000000000000000000029 /* ImagePicker.swift in Sources */,
 				000000000000000000000030 /* EditProfileView.swift in Sources */,
 				000000000000000000000031 /* VerifyEmailView.swift in Sources */,
+				000000000000000000000032 /* PasswordField.swift in Sources */,
 				000000000000000000000025 /* NotificationService.swift in Sources */,
 				000000000000000000000026 /* AppDelegate.swift in Sources */,
 			);
