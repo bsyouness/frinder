@@ -30,26 +30,35 @@ struct SettingsView: View {
                         }
                         .padding(.vertical, 4)
                     } else if let user = authViewModel.currentUser {
-                        HStack(spacing: 12) {
-                            Circle()
-                                .fill(.blue.opacity(0.3))
-                                .frame(width: 50, height: 50)
-                                .overlay(
-                                    Text(user.displayName.prefix(1).uppercased())
-                                        .font(.title2)
-                                        .fontWeight(.semibold)
-                                        .foregroundStyle(.blue)
-                                )
+                        NavigationLink {
+                            EditProfileView()
+                        } label: {
+                            HStack(spacing: 12) {
+                                if let urlStr = user.avatarURL, let url = URL(string: urlStr) {
+                                    AsyncImage(url: url) { phase in
+                                        switch phase {
+                                        case .success(let img):
+                                            img.resizable().scaledToFill()
+                                        default:
+                                            initialsCircle(user.displayName)
+                                        }
+                                    }
+                                    .frame(width: 50, height: 50)
+                                    .clipShape(Circle())
+                                } else {
+                                    initialsCircle(user.displayName)
+                                }
 
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(user.displayName)
-                                    .font(.headline)
-                                Text(user.email)
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(user.displayName)
+                                        .font(.headline)
+                                    Text(user.email)
+                                        .font(.subheadline)
+                                        .foregroundStyle(.secondary)
+                                }
                             }
+                            .padding(.vertical, 4)
                         }
-                        .padding(.vertical, 4)
                     }
                 }
 
@@ -113,13 +122,6 @@ struct SettingsView: View {
                     .foregroundStyle(.primary)
                 }
 
-                // Account section
-                Section {
-                    NavigationLink("Edit Profile") {
-                        EditProfileView()
-                    }
-                }
-
                 // Sign out section
                 Section {
                     Button(role: .destructive) {
@@ -135,6 +137,19 @@ struct SettingsView: View {
             }
             .navigationTitle("Settings")
         }
+    }
+
+    @ViewBuilder
+    private func initialsCircle(_ name: String) -> some View {
+        Circle()
+            .fill(.blue.opacity(0.3))
+            .frame(width: 50, height: 50)
+            .overlay(
+                Text(name.prefix(1).uppercased())
+                    .font(.title2)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(.blue)
+            )
     }
 }
 
