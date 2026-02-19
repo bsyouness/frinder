@@ -1,4 +1,4 @@
-.PHONY: deploy-website bump-version
+.PHONY: deploy-website bump-version serve-website
 
 bump-version:
 ifndef VERSION
@@ -11,6 +11,11 @@ endif
 	@echo "Updating Frinder/Frinder/Views/SettingsView.swift (version display)"
 	@sed -i '' 's/Text("[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*")/Text("$(VERSION)")/' Frinder/Frinder/Views/SettingsView.swift
 	@echo "Version bumped to $(VERSION)"
+
+serve-website:
+	@lsof -ti:8080 | xargs kill -9 2>/dev/null; true
+	@cd website && python3 -m http.server 8080 &
+	@sleep 1 && open http://localhost:8080
 
 deploy-website:
 	rm -rf /tmp/frinder-website
