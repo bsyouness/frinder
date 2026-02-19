@@ -18,6 +18,4 @@ serve-website:
 	@sleep 1 && open http://localhost:8080
 
 deploy-website:
-	rm -rf /tmp/frinder-website
-	cp -r website /tmp/frinder-website
-	cd /tmp/frinder-website && npx wrangler pages deploy . --project-name frinder-website --commit-dirty=true
+	cd /Users/youness/workspace/frinder && firebase deploy --only hosting 2>&1
