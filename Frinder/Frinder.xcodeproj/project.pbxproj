@@ -34,6 +34,9 @@
 		000000000000000000000025 /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000022 /* NotificationService.swift */; };
 		000000000000000000000026 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000023 /* AppDelegate.swift */; };
 		000000000000000000000027 /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = 200000000000000000000005 /* FirebaseMessaging */; };
+		000000000000000000000028 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 200000000000000000000006 /* FirebaseStorage */; };
+		000000000000000000000029 /* ImagePicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000024 /* ImagePicker.swift */; };
+		000000000000000000000030 /* EditProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000025 /* EditProfileView.swift */; };
 		EF233E7F2F356929009EB732 /* GeoMath.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF233E7D2F356929009EB732 /* GeoMath.swift */; };
 		EF233E822F356929009EB732 /* SolarPosition.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF233E812F356929009EB732 /* SolarPosition.swift */; };
 		EF233E842F356929009EB732 /* LunarPosition.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF233E832F356929009EB732 /* LunarPosition.swift */; };
@@ -76,6 +79,8 @@
 		100000000000000000000021 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		100000000000000000000022 /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
 		100000000000000000000023 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		100000000000000000000024 /* ImagePicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImagePicker.swift; sourceTree = "<group>"; };
+		100000000000000000000025 /* EditProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditProfileView.swift; sourceTree = "<group>"; };
 		EF233E7D2F356929009EB732 /* GeoMath.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeoMath.swift; sourceTree = "<group>"; };
 		EF233E802F3683E8009EB732 /* Frinder.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Frinder.entitlements; sourceTree = "<group>"; };
 		EF233E812F356929009EB732 /* SolarPosition.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SolarPosition.swift; sourceTree = "<group>"; };
@@ -97,6 +102,7 @@
 				000000000000000000000019 /* FirebaseAuth in Frameworks */,
 				000000000000000000000020 /* FirebaseFirestore in Frameworks */,
 				000000000000000000000027 /* FirebaseMessaging in Frameworks */,
+				000000000000000000000028 /* FirebaseStorage in Frameworks */,
 				000000000000000000000023 /* GoogleSignIn in Frameworks */,
 				000000000000000000000024 /* GoogleSignInSwift in Frameworks */,
 			);
@@ -169,6 +175,8 @@
 				100000000000000000000017 /* FriendsView.swift */,
 				EF94F2582F4560FA001A2F08 /* BannerAdView.swift */,
 				100000000000000000000018 /* SettingsView.swift */,
+				100000000000000000000024 /* ImagePicker.swift */,
+				100000000000000000000025 /* EditProfileView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -225,6 +233,7 @@
 				200000000000000000000001 /* FirebaseAuth */,
 				200000000000000000000002 /* FirebaseFirestore */,
 				200000000000000000000005 /* FirebaseMessaging */,
+				200000000000000000000006 /* FirebaseStorage */,
 				200000000000000000000003 /* GoogleSignIn */,
 				200000000000000000000004 /* GoogleSignInSwift */,
 				EF94F2562F45603E001A2F08 /* GoogleMobileAds */,
@@ -345,6 +354,8 @@
 				000000000000000000000016 /* RadarView.swift in Sources */,
 				000000000000000000000017 /* FriendsView.swift in Sources */,
 				000000000000000000000018 /* SettingsView.swift in Sources */,
+				000000000000000000000029 /* ImagePicker.swift in Sources */,
+				000000000000000000000030 /* EditProfileView.swift in Sources */,
 				000000000000000000000025 /* NotificationService.swift in Sources */,
 				000000000000000000000026 /* AppDelegate.swift in Sources */,
 			);
@@ -699,6 +710,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 800000000000000000000001 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseMessaging;
+		};
+		200000000000000000000006 /* FirebaseStorage */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 800000000000000000000001 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseStorage;
 		};
 		EF94F2562F45603E001A2F08 /* GoogleMobileAds */ = {
 			isa = XCSwiftPackageProductDependency;

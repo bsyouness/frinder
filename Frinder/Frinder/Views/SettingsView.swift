@@ -113,6 +113,13 @@ struct SettingsView: View {
                     .foregroundStyle(.primary)
                 }
 
+                // Account section
+                Section {
+                    NavigationLink("Edit Profile") {
+                        EditProfileView()
+                    }
+                }
+
                 // Sign out section
                 Section {
                     Button(role: .destructive) {

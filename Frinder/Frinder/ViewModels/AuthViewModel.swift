@@ -17,6 +17,10 @@ class AuthViewModel: ObservableObject {
     var currentUserId: String? {
         authService.currentUserId
     }
+
+    var isEmailPasswordUser: Bool {
+        authService.isEmailPasswordUser
+    }
     private var authStateHandle: AuthStateDidChangeListenerHandle?
 
     init() {
@@ -137,6 +141,28 @@ class AuthViewModel: ObservableObject {
             isLoading = false
             return false
         }
+    }
+
+    func updateDisplayName(_ name: String) async {
+        do {
+            try await authService.updateDisplayName(name)
+            currentUser?.displayName = name
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    func updateAvatar(_ imageData: Data) async {
+        do {
+            let url = try await authService.updateAvatar(imageData)
+            currentUser?.avatarURL = url
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    func updatePassword(_ newPassword: String) async throws {
+        try await authService.updatePassword(newPassword)
     }
 
     private func fetchCurrentUser() async {

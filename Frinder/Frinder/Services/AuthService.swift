@@ -2,6 +2,7 @@ import Foundation
 import FirebaseAuth
 import FirebaseFirestore
 import FirebaseCore
+import FirebaseStorage
 import GoogleSignIn
 
 class AuthService {
@@ -21,6 +22,10 @@ class AuthService {
 
     var isAuthenticated: Bool {
         auth.currentUser != nil
+    }
+
+    var isEmailPasswordUser: Bool {
+        auth.currentUser?.providerData.contains(where: { $0.providerID == "password" }) ?? false
     }
 
     func signUp(email: String, password: String, displayName: String) async throws -> User {
@@ -137,6 +142,41 @@ class AuthService {
         }.filter { $0.id != currentUserId }
     }
 
+    func updateDisplayName(_ name: String) async throws {
+        guard let user = auth.currentUser, let uid = currentUserId else {
+            throw AuthError.notAuthenticated
+        }
+        let changeRequest = user.createProfileChangeRequest()
+        changeRequest.displayName = name
+        try await changeRequest.commitChanges()
+        try await db.collection("users").document(uid).updateData(["displayName": name])
+    }
+
+    func updateAvatar(_ imageData: Data) async throws -> String {
+        guard let uid = currentUserId else {
+            throw AuthError.notAuthenticated
+        }
+        let storageRef = Storage.storage().reference().child("avatars/\(uid).jpg")
+        let metadata = StorageMetadata()
+        metadata.contentType = "image/jpeg"
+        _ = try await storageRef.putDataAsync(imageData, metadata: metadata)
+        let downloadURL = try await storageRef.downloadURL()
+        let urlString = downloadURL.absoluteString
+        try await db.collection("users").document(uid).updateData(["avatarURL": urlString])
+        return urlString
+    }
+
+    func updatePassword(_ newPassword: String) async throws {
+        guard let user = auth.currentUser else {
+            throw AuthError.notAuthenticated
+        }
+        do {
+            try await user.updatePassword(to: newPassword)
+        } catch let error as NSError where error.code == AuthErrorCode.requiresRecentLogin.rawValue {
+            throw AuthError.requiresRecentLogin
+        }
+    }
+
     func addAuthStateListener(_ listener: @escaping (Bool) -> Void) -> AuthStateDidChangeListenerHandle {
         return auth.addStateDidChangeListener { _, user in
             listener(user != nil)
@@ -154,6 +194,7 @@ enum AuthError: LocalizedError {
     case configurationError
     case missingToken
     case differentProvider(providers: [String])
+    case requiresRecentLogin
 
     var errorDescription: String? {
         switch self {
@@ -168,6 +209,8 @@ enum AuthError: LocalizedError {
         case .differentProvider(let providers):
             let method = providers.first.map { providerDisplayName($0) } ?? "another method"
             return "This email is registered with \(method). Please sign in using that method instead."
+        case .requiresRecentLogin:
+            return "Please sign out and sign back in before changing your password."
         }
     }
 
