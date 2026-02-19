@@ -6,12 +6,17 @@ struct ContentView: View {
     var body: some View {
         Group {
             if authViewModel.isAuthenticated {
-                MainTabView()
+                if authViewModel.needsEmailVerification {
+                    VerifyEmailView()
+                } else {
+                    MainTabView()
+                }
             } else {
                 AuthView()
             }
         }
         .animation(.easeInOut, value: authViewModel.isAuthenticated)
+        .animation(.easeInOut, value: authViewModel.needsEmailVerification)
     }
 }
 

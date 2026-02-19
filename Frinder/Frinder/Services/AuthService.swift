@@ -28,6 +28,20 @@ class AuthService {
         auth.currentUser?.providerData.contains(where: { $0.providerID == "password" }) ?? false
     }
 
+    var isEmailVerified: Bool {
+        auth.currentUser?.isEmailVerified ?? false
+    }
+
+    func sendEmailVerification() async throws {
+        guard let user = auth.currentUser else { throw AuthError.notAuthenticated }
+        try await user.sendEmailVerification()
+    }
+
+    func reloadUser() async throws {
+        guard let user = auth.currentUser else { throw AuthError.notAuthenticated }
+        try await user.reload()
+    }
+
     func signUp(email: String, password: String, displayName: String) async throws -> User {
         do {
             let result = try await auth.createUser(withEmail: email, password: password)

@@ -10,6 +10,7 @@ class AuthViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var errorMessage: String?
     @Published var isOffline = false
+    @Published var needsEmailVerification = false
 
     private let authService = AuthService.shared
 
@@ -39,8 +40,13 @@ class AuthViewModel: ObservableObject {
                 self?.isAuthenticated = isAuthenticated
                 if isAuthenticated {
                     await self?.fetchCurrentUser()
+                    // Restore verification gate on app restart for unverified email/password accounts
+                    if let self, self.authService.isEmailPasswordUser && !self.authService.isEmailVerified {
+                        self.needsEmailVerification = true
+                    }
                 } else {
                     self?.currentUser = nil
+                    self?.needsEmailVerification = false
                 }
             }
         }
@@ -58,6 +64,8 @@ class AuthViewModel: ObservableObject {
             )
             currentUser = user
             isAuthenticated = true
+            try? await authService.sendEmailVerification()
+            needsEmailVerification = true
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -76,6 +84,10 @@ class AuthViewModel: ObservableObject {
             )
             currentUser = user
             isAuthenticated = true
+            if !authService.isEmailVerified {
+                try? await authService.sendEmailVerification()
+                needsEmailVerification = true
+            }
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -140,6 +152,27 @@ class AuthViewModel: ObservableObject {
             errorMessage = error.localizedDescription
             isLoading = false
             return false
+        }
+    }
+
+    func checkEmailVerification() async -> Bool {
+        do {
+            try await authService.reloadUser()
+            if authService.isEmailVerified {
+                needsEmailVerification = false
+                return true
+            }
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+        return false
+    }
+
+    func resendVerificationEmail() async {
+        do {
+            try await authService.sendEmailVerification()
+        } catch {
+            errorMessage = error.localizedDescription
         }
     }
 
