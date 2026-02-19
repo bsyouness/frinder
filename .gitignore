@@ -52,5 +52,8 @@ Thumbs.db
 functions/node_modules/
 functions/lib/
 
+# Firebase CLI cache
+.firebase/
+
 # VSCode files
 .vscode
