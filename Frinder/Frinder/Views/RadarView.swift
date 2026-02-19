@@ -563,6 +563,29 @@ struct EarthView: View {
                 context.draw(resolvedSun, in: rect)
             }
 
+            // Moon (drawn behind earth fill)
+            if let mp = moonPosition, let moonName = moonImageName {
+                let moonSize: CGFloat = 90
+                if moonName == "moon-new" {
+                    let resolvedMoon = context.resolve(Image("moon-full"))
+                    let aspect = resolvedMoon.size.width / max(resolvedMoon.size.height, 1)
+                    let w = moonSize * aspect
+                    let h = moonSize
+                    let rect = CGRect(x: mp.x - w / 2, y: mp.y - h / 2, width: w, height: h)
+                    context.drawLayer { ctx in
+                        ctx.addFilter(.colorInvert())
+                        ctx.draw(resolvedMoon, in: rect)
+                    }
+                } else {
+                    let resolvedMoon = context.resolve(Image(moonName))
+                    let aspect = resolvedMoon.size.width / max(resolvedMoon.size.height, 1)
+                    let w = moonSize * aspect
+                    let h = moonSize
+                    let rect = CGRect(x: mp.x - w / 2, y: mp.y - h / 2, width: w, height: h)
+                    context.draw(resolvedMoon, in: rect)
+                }
+            }
+
             // --- Earth fill (robust): clip screen rect by horizon half-space ---
             let earthColor = Color(red: 50.0 / 255, green: 168.0 / 255, blue: 82.0 / 255).opacity(0.25)
 
@@ -679,30 +702,6 @@ struct EarthView: View {
                     context.opacity = star.opacity
                     context.draw(img, in: rect)
                     context.opacity = 1
-                }
-            }
-
-            // Moon (world-projected image, ~90pt)
-            if let mp = moonPosition, let moonName = moonImageName {
-                let moonSize: CGFloat = 90
-                if moonName == "moon-new" {
-                    // Inverted full moon for new moon
-                    let resolvedMoon = context.resolve(Image("moon-full"))
-                    let aspect = resolvedMoon.size.width / max(resolvedMoon.size.height, 1)
-                    let w = moonSize * aspect
-                    let h = moonSize
-                    let rect = CGRect(x: mp.x - w / 2, y: mp.y - h / 2, width: w, height: h)
-                    context.drawLayer { ctx in
-                        ctx.addFilter(.colorInvert())
-                        ctx.draw(resolvedMoon, in: rect)
-                    }
-                } else {
-                    let resolvedMoon = context.resolve(Image(moonName))
-                    let aspect = resolvedMoon.size.width / max(resolvedMoon.size.height, 1)
-                    let w = moonSize * aspect
-                    let h = moonSize
-                    let rect = CGRect(x: mp.x - w / 2, y: mp.y - h / 2, width: w, height: h)
-                    context.draw(resolvedMoon, in: rect)
                 }
             }
 
