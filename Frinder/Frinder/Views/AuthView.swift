@@ -7,6 +7,8 @@ struct AuthView: View {
     @State private var password = ""
     @State private var displayName = ""
     @State private var showResetAlert = false
+    @State private var showResetPrompt = false
+    @State private var resetEmail = ""
 
     var body: some View {
         NavigationStack {
@@ -56,15 +58,10 @@ struct AuthView: View {
                         HStack {
                             Spacer()
                             Button("Forgot Password?") {
-                                Task {
-                                    let success = await authViewModel.sendPasswordReset(email: email)
-                                    if success {
-                                        showResetAlert = true
-                                    }
-                                }
+                                resetEmail = email
+                                showResetPrompt = true
                             }
                             .font(.caption)
-                            .disabled(!isValidEmail(email) || authViewModel.isLoading)
                         }
                     }
                 }
@@ -167,10 +164,24 @@ struct AuthView: View {
                 }
                 .scrollDismissesKeyboard(.interactively)
             }
+            .alert("Reset Password", isPresented: $showResetPrompt) {
+                TextField("Email address", text: $resetEmail)
+                    .keyboardType(.emailAddress)
+                    .autocorrectionDisabled()
+                Button("Send Reset Link") {
+                    Task {
+                        let success = await authViewModel.sendPasswordReset(email: resetEmail)
+                        if success { showResetAlert = true }
+                    }
+                }
+                Button("Cancel", role: .cancel) { }
+            } message: {
+                Text("Enter your email address and we'll send you a reset link.")
+            }
             .alert("Check Your Email", isPresented: $showResetAlert) {
                 Button("OK", role: .cancel) { }
             } message: {
-                Text("If an account exists for \(email), you'll receive a password reset link. Check your spam folder if you don't see it.")
+                Text("If an account exists for \(resetEmail), you'll receive a password reset link. Check your spam folder if you don't see it.")
             }
         }
     }
