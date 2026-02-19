@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Verified — Frinder</title>
+    <meta name="robots" content="noindex">
+    <link rel="icon" type="image/jpeg" href="assets/frinder-icon.jpg">
+    <link rel="apple-touch-icon" href="assets/frinder-icon.jpg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            color: #fff;
+            overflow: hidden;
+        }
+
+        /* ── Fixed sky background ── */
+        .sky-bg {
+            position: fixed;
+            inset: 0;
+            z-index: -2;
+            background: linear-gradient(180deg, #6a9fd8 0%, #a8cdf0 100%);
+        }
+
+        /* ── Celestial layer ── */
+        .celestial {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .celestial img {
+            position: absolute;
+        }
+
+        .cel-sun {
+            width: 600px;
+            top: -80px;
+            right: -80px;
+            opacity: 0.9;
+        }
+
+        .cel-cloud {
+            opacity: 0.85;
+        }
+
+        /* ── Nav ── */
+        .site-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 100;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+        }
+
+        .site-nav .nav-logo {
+            font-size: 18px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            color: #fff;
+            text-decoration: none;
+        }
+
+        /* ── Main centered layout ── */
+        .page-center {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        /* ── Verification card ── */
+        .verify-card {
+            max-width: 460px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 28px;
+            padding: 48px 40px;
+            text-align: center;
+            box-shadow: 0 24px 64px rgba(0, 0, 0, 0.2);
+            animation: cardIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
+        @keyframes cardIn {
+            from { opacity: 0; transform: translateY(24px) scale(0.97); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .verify-icon {
+            width: 72px;
+            height: 72px;
+            border-radius: 18px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+            margin: 0 auto 20px;
+            display: block;
+        }
+
+        /* Animated checkmark ring */
+        .check-ring {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            background: rgba(52, 199, 89, 0.18);
+            border: 2px solid rgba(52, 199, 89, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 34px;
+            animation: popIn 0.5s 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
+        @keyframes popIn {
+            from { transform: scale(0.5); opacity: 0; }
+            to   { transform: scale(1);   opacity: 1; }
+        }
+
+        /* Error state */
+        .error-ring {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            background: rgba(255, 69, 58, 0.15);
+            border: 2px solid rgba(255, 69, 58, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 34px;
+            animation: popIn 0.5s 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
+        .verify-label {
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.55);
+            margin-bottom: 10px;
+        }
+
+        .verify-title {
+            font-size: 30px;
+            font-weight: 800;
+            letter-spacing: -0.8px;
+            line-height: 1.1;
+            margin-bottom: 14px;
+        }
+
+        .verify-body {
+            font-size: 16px;
+            line-height: 1.65;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 36px;
+        }
+
+        /* CTA button */
+        .open-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            padding: 17px 28px;
+            background: #fff;
+            color: #111;
+            font-family: inherit;
+            font-size: 17px;
+            font-weight: 700;
+            border: none;
+            border-radius: 16px;
+            cursor: pointer;
+            text-decoration: none;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.18);
+            transition: transform 0.15s, box-shadow 0.15s;
+            margin-bottom: 16px;
+            letter-spacing: -0.2px;
+        }
+
+        .open-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 28px rgba(0, 0, 0, 0.25);
+        }
+
+        .open-btn:active {
+            transform: translateY(0);
+        }
+
+        /* Countdown badge inside button */
+        .countdown-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 26px;
+            height: 26px;
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            font-size: 13px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .fallback-text {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.5);
+            line-height: 1.5;
+        }
+
+        .fallback-text a {
+            color: rgba(255, 255, 255, 0.75);
+            text-decoration: underline;
+            text-underline-offset: 2px;
+        }
+
+        /* Spinner (shown while calling applyActionCode) */
+        .spinner {
+            width: 44px;
+            height: 44px;
+            border: 3px solid rgba(255, 255, 255, 0.25);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 480px) {
+            .verify-card {
+                padding: 36px 24px;
+                border-radius: 22px;
+            }
+
+            .verify-title {
+                font-size: 26px;
+            }
+
+            .cel-sun {
+                width: 380px;
+                top: -50px;
+                right: -50px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Fixed sky -->
+    <div class="sky-bg"></div>
+
+    <!-- Celestial objects -->
+    <div class="celestial">
+        <img src="assets/sun.png" class="cel-sun" alt="">
+        <img src="assets/cloud1.png" class="cel-cloud" style="width:260px;top:30px;left:-20px;" alt="">
+        <img src="assets/cloud2.png" class="cel-cloud" style="width:180px;top:100px;right:5%;" alt="">
+        <img src="assets/cloud3.png" class="cel-cloud" style="width:200px;bottom:15%;left:10%;" alt="">
+    </div>
+
+    <!-- Nav -->
+    <nav class="site-nav">
+        <a href="/" class="nav-logo">Frinder</a>
+    </nav>
+
+    <!-- Main content -->
+    <main class="page-center">
+        <div class="verify-card" id="card">
+
+            <!-- Loading state (shown briefly while verifying if oobCode present) -->
+            <div id="stateLoading" style="display:none;">
+                <div class="spinner"></div>
+                <p class="verify-body" style="margin-bottom:0;">Verifying your email…</p>
+            </div>
+
+            <!-- Success state -->
+            <div id="stateSuccess">
+                <img src="assets/frinder-icon.jpg" alt="Frinder" class="verify-icon">
+                <div class="verify-label">Email Confirmed</div>
+                <h1 class="verify-title">You're all set! 🎉</h1>
+                <p class="verify-body">
+                    Welcome to Frinder! Your email has been verified and your account is ready.
+                    Let's go find your friends!
+                </p>
+                <a href="frinder://" class="open-btn" id="openBtn">
+                    Open Frinder
+                    <span class="countdown-badge" id="countdown">3</span>
+                </a>
+                <p class="fallback-text">
+                    App not opening? Make sure Frinder is installed on your device.<br>
+                    <a href="/">Learn more at frinder.me</a>
+                </p>
+            </div>
+
+            <!-- Error state -->
+            <div id="stateError" style="display:none;">
+                <div class="error-ring">❌</div>
+                <div class="verify-label">Something went wrong</div>
+                <h1 class="verify-title" style="font-size:24px;">Verification failed</h1>
+                <p class="verify-body" id="errorMsg">
+                    This link may have expired or already been used. Please request a new verification email from inside the Frinder app.
+                </p>
+                <a href="frinder://" class="open-btn" style="background:#fff;">
+                    Open Frinder
+                </a>
+                <p class="fallback-text">
+                    <a href="/">Back to frinder.me</a>
+                </p>
+            </div>
+
+        </div>
+    </main>
+
+    <!--
+        Firebase JS SDK — used only when this page acts as a custom action handler
+        (i.e., when Firebase Console > Authentication > Templates > Action URL is set to https://frinder.me/verify).
+        In that case the URL will contain ?mode=verifyEmail&oobCode=...&apiKey=...
+        and we apply the code here instead of on Firebase's hosted UI.
+    -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js';
+        import { getAuth, applyActionCode } from 'https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBhb-dunsX8zKz2IZViZgp7iq4x9Xml4eg",
+            authDomain: "frinder-e1b07.firebaseapp.com",
+            projectId: "frinder-e1b07",
+        };
+
+        const params = new URLSearchParams(window.location.search);
+        const mode = params.get('mode');
+        const oobCode = params.get('oobCode');
+
+        if (mode === 'verifyEmail' && oobCode) {
+            // Custom action handler: verify the email here
+            document.getElementById('stateSuccess').style.display = 'none';
+            document.getElementById('stateLoading').style.display = 'block';
+
+            try {
+                const app = initializeApp(firebaseConfig);
+                const auth = getAuth(app);
+                await applyActionCode(auth, oobCode);
+                // Success — show success state
+                document.getElementById('stateLoading').style.display = 'none';
+                document.getElementById('stateSuccess').style.display = 'block';
+                startCountdown();
+            } catch (err) {
+                document.getElementById('stateLoading').style.display = 'none';
+                document.getElementById('stateError').style.display = 'block';
+                if (err.code === 'auth/expired-action-code') {
+                    document.getElementById('errorMsg').textContent =
+                        'This verification link has expired. Please request a new one from inside the Frinder app.';
+                } else if (err.code === 'auth/invalid-action-code') {
+                    document.getElementById('errorMsg').textContent =
+                        'This verification link has already been used. If your email is already verified, just open the app!';
+                }
+            }
+        } else {
+            // Continue URL redirect: Firebase already verified — just show success
+            startCountdown();
+        }
+
+        function startCountdown() {
+            let secs = 3;
+            const badge = document.getElementById('countdown');
+            const btn = document.getElementById('openBtn');
+
+            const tick = setInterval(() => {
+                secs--;
+                if (secs > 0) {
+                    badge.textContent = secs;
+                } else {
+                    clearInterval(tick);
+                    badge.textContent = '→';
+                    // Attempt to open the app
+                    window.location.href = 'frinder://';
+                }
+            }, 1000);
+
+            // Clicking the button cancels the auto-redirect and opens immediately
+            btn.addEventListener('click', () => {
+                clearInterval(tick);
+            });
+        }
+    </script>
+
+</body>
+</html>

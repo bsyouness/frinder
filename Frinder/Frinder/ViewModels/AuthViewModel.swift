@@ -64,7 +64,7 @@ class AuthViewModel: ObservableObject {
             )
             currentUser = user
             isAuthenticated = true
-            try? await authService.sendEmailVerification()
+            // Verification email is sent by the Cloud Function trigger (onUserCreate)
             needsEmailVerification = true
         } catch {
             errorMessage = error.localizedDescription
@@ -85,7 +85,6 @@ class AuthViewModel: ObservableObject {
             currentUser = user
             isAuthenticated = true
             if !authService.isEmailVerified {
-                try? await authService.sendEmailVerification()
                 needsEmailVerification = true
             }
         } catch {
