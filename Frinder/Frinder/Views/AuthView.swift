@@ -9,6 +9,8 @@ struct AuthView: View {
     @State private var showResetAlert = false
     @State private var showResetPrompt = false
     @State private var resetEmail = ""
+    @State private var showProviderAlert = false
+    @State private var providerAlertMessage = ""
 
     var body: some View {
         NavigationStack {
@@ -174,7 +176,15 @@ struct AuthView: View {
                 Button("Send Reset Link") {
                     Task {
                         let success = await authViewModel.sendPasswordReset(email: resetEmail)
-                        if success { showResetAlert = true }
+                        if success {
+                            showResetAlert = true
+                        } else if let msg = authViewModel.errorMessage {
+                            // Show provider mismatch as its own alert so it isn't
+                            // buried in the main form after the prompt dismisses.
+                            providerAlertMessage = msg
+                            authViewModel.errorMessage = nil
+                            showProviderAlert = true
+                        }
                     }
                 }
                 Button("Cancel", role: .cancel) { }

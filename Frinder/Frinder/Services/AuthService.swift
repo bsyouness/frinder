@@ -34,7 +34,17 @@ class AuthService {
 
     func sendEmailVerification() async throws {
         guard let user = auth.currentUser else { throw AuthError.notAuthenticated }
-        try await user.sendEmailVerification()
+        let idToken = try await user.getIDToken()
+
+        let url = URL(string: "https://us-central1-frinder-e1b07.cloudfunctions.net/resendVerificationEmail")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("Bearer \(idToken)", forHTTPHeaderField: "Authorization")
+
+        let (_, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
+            throw URLError(.badServerResponse)
+        }
     }
 
     func reloadUser() async throws {
@@ -124,7 +134,12 @@ class AuthService {
     }
 
     func sendPasswordReset(email: String) async throws {
-        try await auth.sendPasswordReset(withEmail: email)
+        let normalised = email.lowercased().trimmingCharacters(in: .whitespaces)
+        let providers = try? await auth.fetchSignInMethods(forEmail: normalised)
+        if let providers, !providers.isEmpty, !providers.contains("password") {
+            throw AuthError.differentProvider(providers: providers)
+        }
+        try await auth.sendPasswordReset(withEmail: normalised)
     }
 
     func saveUser(_ user: User) async throws {
