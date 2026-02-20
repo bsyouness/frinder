@@ -19,3 +19,6 @@ serve-website:
 
 deploy-website:
 	cd /Users/youness/workspace/frinder && firebase deploy --only hosting 2>&1
+
+deploy-functions:
+	cd /Users/youness/workspace/frinder && firebase deploy --only functions 2>&1
