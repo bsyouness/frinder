@@ -1,7 +1,7 @@
 import * as admin from "firebase-admin";
 import sgMail from "@sendgrid/mail";
 
-export const FROM = {email: "noreply@frinder.app", name: "The Frinder Team 🌍🧭"};
+export const FROM = {email: "noreply@frinder.me", name: "Your Friends at Frinder"};
 
 // Send an email via SendGrid. Reads the API key at call time so tests can
 // set process.env.SENDGRID_API_KEY before calling.
@@ -21,8 +21,9 @@ export async function sendEmail(
   try {
     await sgMail.send({to, from: FROM, subject, text, html});
     console.log(`Email sent to ${to}`);
-  } catch (error) {
-    console.error(`Error sending email to ${to}:`, error);
+  } catch (error: any) {
+    const body = error?.response?.body;
+    console.error(`Error sending email to ${to}: status=${error?.code}`, JSON.stringify(body));
   }
 }
 

@@ -8,6 +8,7 @@ struct VerifyEmailView: View {
     @State private var resendCooldown = 0
     @State private var notVerifiedYet = false
     @State private var resendTimer: Timer?
+    @State private var resendError: String?
 
     private var email: String {
         authViewModel.currentUser?.email ?? "your email"
@@ -47,11 +48,18 @@ struct VerifyEmailView: View {
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 32)
 
-            // "I've verified" feedback
+            // Feedback messages
             if notVerifiedYet {
                 Text("Your email hasn't been verified yet. Please check your inbox and try again.")
                     .font(.footnote)
                     .foregroundStyle(.orange)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 32)
+            }
+            if let error = resendError {
+                Text(error)
+                    .font(.footnote)
+                    .foregroundStyle(.red)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 32)
             }
@@ -118,9 +126,16 @@ struct VerifyEmailView: View {
 
     private func resend() async {
         isResending = true
+        resendError = nil
+        authViewModel.errorMessage = nil
         await authViewModel.resendVerificationEmail()
         isResending = false
-        startCooldown()
+        if let error = authViewModel.errorMessage {
+            resendError = error
+            authViewModel.errorMessage = nil
+        } else {
+            startCooldown()
+        }
     }
 
     private func startCooldown() {

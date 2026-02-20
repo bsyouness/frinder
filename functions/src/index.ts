@@ -98,7 +98,9 @@ async function sendPushNotification(
 }
 
 // 1. Trigger when a user receives a friend request
-export const onFriendRequestReceived = functions.firestore
+export const onFriendRequestReceived = functions
+  .runWith({ secrets: ["SENDGRID_API_KEY"] })
+  .firestore
   .document("users/{userId}")
   .onUpdate(async (change, context) => {
     const userId = context.params.userId;
@@ -158,7 +160,9 @@ export const onFriendRequestReceived = functions.firestore
   });
 
 // 2. Trigger when a pending invite is created (for non-existent users)
-export const onInviteCreated = functions.firestore
+export const onInviteCreated = functions
+  .runWith({ secrets: ["SENDGRID_API_KEY"] })
+  .firestore
   .document("pendingInvites/{inviteId}")
   .onCreate(async (snap) => {
     const invite = snap.data() as PendingInvite;
@@ -183,7 +187,9 @@ export const onInviteCreated = functions.firestore
   });
 
 // 3. Trigger when a new auth user is created — send a custom verification email
-export const sendVerificationEmailOnSignup = functions.auth.user().onCreate(async (user) => {
+export const sendVerificationEmailOnSignup = functions
+  .runWith({ secrets: ["SENDGRID_API_KEY"] })
+  .auth.user().onCreate(async (user) => {
   // Only email/password accounts need verification — Google/Apple are already verified
   if (user.emailVerified || !user.email) return null;
 
@@ -197,7 +203,9 @@ export const sendVerificationEmailOnSignup = functions.auth.user().onCreate(asyn
 });
 
 // 4. HTTPS endpoint for resending the custom verification email from the iOS app
-export const resendVerificationEmail = functions.https.onRequest(async (req, res) => {
+export const resendVerificationEmail = functions
+  .runWith({ secrets: ["SENDGRID_API_KEY"] })
+  .https.onRequest(async (req, res) => {
   res.set("Access-Control-Allow-Origin", "*");
   if (req.method === "OPTIONS") {
     res.status(204).send("");
