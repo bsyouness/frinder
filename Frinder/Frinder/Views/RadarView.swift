@@ -610,6 +610,9 @@ struct EarthView: View {
 
     var body: some View {
         Canvas { context, size in
+            // Device roll — used to keep sun, moon, and clouds upright when phone is rolled
+            let roll = rotationMatrix.map { Self.deviceRoll(from: $0) } ?? 0.0
+
             // Sun (world-projected image, 180pt — drawn behind earth)
             if let sp = sunPosition {
                 let resolvedSun = context.resolve(Image("sun"))
@@ -617,8 +620,11 @@ struct EarthView: View {
                 let aspect = resolvedSun.size.width / max(resolvedSun.size.height, 1)
                 let w = sunSize * aspect
                 let h = sunSize
-                let rect = CGRect(x: sp.x - w / 2, y: sp.y - h / 2, width: w, height: h)
-                context.draw(resolvedSun, in: rect)
+                context.drawLayer { ctx in
+                    ctx.translateBy(x: sp.x, y: sp.y)
+                    ctx.rotate(by: Angle(radians: -roll))
+                    ctx.draw(resolvedSun, in: CGRect(x: -w / 2, y: -h / 2, width: w, height: h))
+                }
             }
 
             // Moon (drawn behind earth fill)
@@ -629,18 +635,22 @@ struct EarthView: View {
                     let aspect = resolvedMoon.size.width / max(resolvedMoon.size.height, 1)
                     let w = moonSize * aspect
                     let h = moonSize
-                    let rect = CGRect(x: mp.x - w / 2, y: mp.y - h / 2, width: w, height: h)
                     context.drawLayer { ctx in
+                        ctx.translateBy(x: mp.x, y: mp.y)
+                        ctx.rotate(by: Angle(radians: -roll))
                         ctx.addFilter(.colorInvert())
-                        ctx.draw(resolvedMoon, in: rect)
+                        ctx.draw(resolvedMoon, in: CGRect(x: -w / 2, y: -h / 2, width: w, height: h))
                     }
                 } else {
                     let resolvedMoon = context.resolve(Image(moonName))
                     let aspect = resolvedMoon.size.width / max(resolvedMoon.size.height, 1)
                     let w = moonSize * aspect
                     let h = moonSize
-                    let rect = CGRect(x: mp.x - w / 2, y: mp.y - h / 2, width: w, height: h)
-                    context.draw(resolvedMoon, in: rect)
+                    context.drawLayer { ctx in
+                        ctx.translateBy(x: mp.x, y: mp.y)
+                        ctx.rotate(by: Angle(radians: -roll))
+                        ctx.draw(resolvedMoon, in: CGRect(x: -w / 2, y: -h / 2, width: w, height: h))
+                    }
                 }
             }
 
@@ -884,7 +894,6 @@ struct EarthView: View {
 
             // Clouds (day only, world-projected, skip any that overlap the sun or moon)
             if isDaytime, let R = rotationMatrix {
-                let roll = Self.deviceRoll(from: R)
                 let resolvedClouds = Self.cloudImageNames.map { context.resolve(Image($0)) }
                 let clearanceRadius: CGFloat = 120
                 for cloud in Self.clouds {
