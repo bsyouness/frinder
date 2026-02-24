@@ -572,14 +572,25 @@ struct EarthView: View {
     private static func generateBuildings(seed: UInt64) -> [SceneryBuilding] {
         var rng = SeededRandomNumberGenerator(seed: seed &+ 2002)
         var buildings: [SceneryBuilding] = []
-        let count = Int.random(in: 10 ... 15, using: &rng)
-        for _ in 0 ..< count {
-            let az = Double.random(in: 0 ... (2 * .pi), using: &rng)
-            let h = Double.random(in: 0.06 ... 0.20, using: &rng)
-            let w = Double.random(in: 4 * .pi / 180 ... 10 * .pi / 180, using: &rng)
+        var az = 0.0
+        let twoPi = 2 * Double.pi
+        while az < twoPi {
+            let width = Double.random(in: 1.5 * .pi / 180 ... 8.0 * .pi / 180, using: &rng)
+            // Bimodal heights: mostly short/medium, ~15% tall
+            let h: Double
+            if Double.random(in: 0 ... 1, using: &rng) < 0.15 {
+                h = Double.random(in: 0.14 ... 0.24, using: &rng)
+            } else {
+                h = Double.random(in: 0.02 ... 0.11, using: &rng)
+            }
+            let roofType: SceneryBuilding.RoofType =
+                Double.random(in: 0 ... 1, using: &rng) < 0.2 ? .pointed : .flat
             var lit = [Bool]()
             for _ in 0 ..< 8 { lit.append(Bool.random(using: &rng)) }
-            buildings.append(SceneryBuilding(azimuth: az, heightAngle: h, halfWidth: w / 2, litWindows: lit))
+            buildings.append(SceneryBuilding(
+                azStart: az, azEnd: az + width,
+                heightAngle: h, roofType: roofType, litWindows: lit))
+            az += width
         }
         return buildings
     }
@@ -767,41 +778,78 @@ struct EarthView: View {
                     }
                 } else {
                     for building in buildings {
-                        let az = building.azimuth
                         let h = building.heightAngle
-                        let hw = building.halfWidth
-                        guard let bl = proj(wd(az: az - hw, el: 0)),
-                              let br = proj(wd(az: az + hw, el: 0)),
-                              let tl = proj(wd(az: az - hw, el: h)),
-                              let tr = proj(wd(az: az + hw, el: h)) else { continue }
-                        var path = Path()
-                        path.move(to: bl)
-                        path.addLine(to: br)
-                        path.addLine(to: tr)
-                        path.addLine(to: tl)
-                        path.closeSubpath()
-                        context.fill(path, with: .color(silhouetteColor))
+                        let azS = building.azStart
+                        let azE = building.azEnd
+                        let azC = (azS + azE) / 2
 
-                        if !isDaytime {
-                            let bWidth = abs(br.x - bl.x)
-                            let bHeight = abs(bl.y - tl.y)
-                            let wW = max(2, bWidth * 0.25)
-                            let wH = max(2, bHeight * 0.15)
-                            for row in 0 ..< 4 {
-                                for col in 0 ..< 2 {
-                                    let idx = row * 2 + col
-                                    guard idx < building.litWindows.count,
-                                          building.litWindows[idx] else { continue }
-                                    let t = (Double(col) + 0.5) / 2.0
-                                    let v = (Double(row) + 0.5) / 4.0
-                                    let bx = bl.x + (br.x - bl.x) * t
-                                    let by = bl.y + (br.y - bl.y) * t
-                                    let tx = tl.x + (tr.x - tl.x) * t
-                                    let ty = tl.y + (tr.y - tl.y) * t
-                                    let wx = bx + (tx - bx) * v
-                                    let wy = by + (ty - by) * v
-                                    let rect = CGRect(x: wx - wW / 2, y: wy - wH / 2, width: wW, height: wH)
-                                    context.fill(Path(rect), with: .color(windowColor))
+                        switch building.roofType {
+                        case .flat:
+                            guard let bl = proj(wd(az: azS, el: 0)),
+                                  let br = proj(wd(az: azE, el: 0)),
+                                  let tl = proj(wd(az: azS, el: h)),
+                                  let tr = proj(wd(az: azE, el: h)) else { continue }
+                            var path = Path()
+                            path.move(to: bl)
+                            path.addLine(to: tl)
+                            path.addLine(to: tr)
+                            path.addLine(to: br)
+                            path.closeSubpath()
+                            context.fill(path, with: .color(silhouetteColor))
+                            if !isDaytime {
+                                let wW = max(1, abs(br.x - bl.x) * 0.07)
+                                let wH = max(1, abs(bl.y - tl.y) * 0.06)
+                                for row in 0 ..< 4 {
+                                    for col in 0 ..< 2 {
+                                        let idx = row * 2 + col
+                                        guard idx < building.litWindows.count,
+                                              building.litWindows[idx] else { continue }
+                                        let t = (Double(col) + 0.5) / 2.0
+                                        let v = (Double(row) + 0.5) / 4.0
+                                        let bx = bl.x + (br.x - bl.x) * t
+                                        let by = bl.y + (br.y - bl.y) * t
+                                        let tx = tl.x + (tr.x - tl.x) * t
+                                        let ty = tl.y + (tr.y - tl.y) * t
+                                        let wx = bx + (tx - bx) * v
+                                        let wy = by + (ty - by) * v
+                                        context.fill(Path(CGRect(x: wx - wW / 2, y: wy - wH / 2, width: wW, height: wH)), with: .color(windowColor))
+                                    }
+                                }
+                            }
+
+                        case .pointed:
+                            let bodyH = h * 0.65
+                            guard let bl = proj(wd(az: azS, el: 0)),
+                                  let br = proj(wd(az: azE, el: 0)),
+                                  let tl = proj(wd(az: azS, el: bodyH)),
+                                  let tr = proj(wd(az: azE, el: bodyH)),
+                                  let peak = proj(wd(az: azC, el: h)) else { continue }
+                            var path = Path()
+                            path.move(to: bl)
+                            path.addLine(to: tl)
+                            path.addLine(to: peak)
+                            path.addLine(to: tr)
+                            path.addLine(to: br)
+                            path.closeSubpath()
+                            context.fill(path, with: .color(silhouetteColor))
+                            if !isDaytime {
+                                let wW = max(1, abs(br.x - bl.x) * 0.07)
+                                let wH = max(1, abs(bl.y - tl.y) * 0.06)
+                                for row in 0 ..< 3 {
+                                    for col in 0 ..< 2 {
+                                        let idx = row * 2 + col
+                                        guard idx < building.litWindows.count,
+                                              building.litWindows[idx] else { continue }
+                                        let t = (Double(col) + 0.5) / 2.0
+                                        let v = (Double(row) + 0.5) / 3.0
+                                        let bx = bl.x + (br.x - bl.x) * t
+                                        let by = bl.y + (br.y - bl.y) * t
+                                        let tx = tl.x + (tr.x - tl.x) * t
+                                        let ty = tl.y + (tr.y - tl.y) * t
+                                        let wx = bx + (tx - bx) * v
+                                        let wy = by + (ty - by) * v
+                                        context.fill(Path(CGRect(x: wx - wW / 2, y: wy - wH / 2, width: wW, height: wH)), with: .color(windowColor))
+                                    }
                                 }
                             }
                         }
@@ -887,9 +935,11 @@ struct SceneryNatureElement {
 }
 
 struct SceneryBuilding {
-    let azimuth: Double
+    enum RoofType { case flat, pointed }
+    let azStart: Double    // left edge azimuth (radians)
+    let azEnd: Double      // right edge azimuth (radians)
     let heightAngle: Double
-    let halfWidth: Double
+    let roofType: RoofType
     let litWindows: [Bool] // 2 cols × 4 rows = 8 entries, row-major
 }
 
