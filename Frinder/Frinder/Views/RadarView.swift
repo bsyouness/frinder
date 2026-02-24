@@ -743,6 +743,27 @@ struct EarthView: View {
                 }
             }
 
+            // Stars (night only, world-projected — drawn before scenery so buildings occlude them)
+            if !isDaytime, let R = rotationMatrix {
+                let resolvedStars = Self.starImageNames.map { context.resolve(Image($0)) }
+                for star in Self.stars {
+                    guard let pt = GeoMath.projectToScreen(
+                        worldDirection: star.dir,
+                        rotationMatrix: R,
+                        horizontalFOV: Self.horizontalFOV,
+                        verticalFOV: Self.verticalFOV,
+                        screenSize: size) else { continue }
+                    if let mp = moonPosition, hypot(pt.x - mp.x, pt.y - mp.y) < 50 { continue }
+                    let img = resolvedStars[star.imageIndex]
+                    let w = img.size.width * star.scale
+                    let h = img.size.height * star.scale
+                    let rect = CGRect(x: pt.x - w / 2, y: pt.y - h / 2, width: w, height: h)
+                    context.opacity = star.opacity
+                    context.draw(img, in: rect)
+                    context.opacity = 1
+                }
+            }
+
             // Scenery silhouettes (world-projected, near horizon)
             if let R = rotationMatrix {
                 let silhouetteColor = Color(white: 0.07)
@@ -856,26 +877,6 @@ struct EarthView: View {
                             }
                         }
                     }
-                }
-            }
-
-            // Stars (night only, world-projected)
-            if !isDaytime, let R = rotationMatrix {
-                let resolvedStars = Self.starImageNames.map { context.resolve(Image($0)) }
-                for star in Self.stars {
-                    guard let pt = GeoMath.projectToScreen(
-                        worldDirection: star.dir,
-                        rotationMatrix: R,
-                        horizontalFOV: Self.horizontalFOV,
-                        verticalFOV: Self.verticalFOV,
-                        screenSize: size) else { continue }
-                    let img = resolvedStars[star.imageIndex]
-                    let w = img.size.width * star.scale
-                    let h = img.size.height * star.scale
-                    let rect = CGRect(x: pt.x - w / 2, y: pt.y - h / 2, width: w, height: h)
-                    context.opacity = star.opacity
-                    context.draw(img, in: rect)
-                    context.opacity = 1
                 }
             }
 
