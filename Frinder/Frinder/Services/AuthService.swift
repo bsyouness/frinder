@@ -4,6 +4,7 @@ import FirebaseFirestore
 import FirebaseCore
 import FirebaseStorage
 import GoogleSignIn
+import AuthenticationServices
 
 class AuthService {
     static let shared = AuthService()
@@ -124,6 +125,39 @@ class AuthService {
         let displayName = result.user.profile?.name ?? "User"
         let email = result.user.profile?.email ?? ""
         let user = User(id: authResult.user.uid, email: email, displayName: displayName)
+        try await saveUser(user)
+        return user
+    }
+
+    func signInWithApple(credential: ASAuthorizationAppleIDCredential, rawNonce: String) async throws -> User {
+        guard let appleIDToken = credential.identityToken,
+              let idTokenString = String(data: appleIDToken, encoding: .utf8) else {
+            throw AuthError.missingToken
+        }
+
+        let firebaseCredential = OAuthProvider.appleCredential(
+            withIDToken: idTokenString,
+            rawNonce: rawNonce,
+            fullName: credential.fullName
+        )
+
+        let authResult = try await auth.signIn(with: firebaseCredential)
+
+        if let existingUser = try await fetchUser(id: authResult.user.uid) {
+            return existingUser
+        }
+
+        // New Apple user — name is only provided on the first sign-in
+        let fullName = [credential.fullName?.givenName, credential.fullName?.familyName]
+            .compactMap { $0 }
+            .joined(separator: " ")
+            .trimmingCharacters(in: .whitespaces)
+        let email = credential.email ?? authResult.user.email ?? ""
+        let user = User(
+            id: authResult.user.uid,
+            email: email,
+            displayName: fullName.isEmpty ? "Apple User" : fullName
+        )
         try await saveUser(user)
         return user
     }

@@ -2,6 +2,7 @@ import Foundation
 import FirebaseAuth
 import Combine
 import UIKit
+import AuthenticationServices
 
 @MainActor
 class AuthViewModel: ObservableObject {
@@ -107,6 +108,21 @@ class AuthViewModel: ObservableObject {
 
         do {
             let user = try await authService.signInWithGoogle(presenting: rootViewController)
+            currentUser = user
+            isAuthenticated = true
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+
+        isLoading = false
+    }
+
+    func signInWithApple(credential: ASAuthorizationAppleIDCredential, rawNonce: String) async {
+        isLoading = true
+        errorMessage = nil
+
+        do {
+            let user = try await authService.signInWithApple(credential: credential, rawNonce: rawNonce)
             currentUser = user
             isAuthenticated = true
         } catch {

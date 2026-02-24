@@ -1,4 +1,6 @@
 import SwiftUI
+import AuthenticationServices
+import CryptoKit
 
 struct AuthView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
@@ -11,6 +13,7 @@ struct AuthView: View {
     @State private var resetEmail = ""
     @State private var showProviderAlert = false
     @State private var providerAlertMessage = ""
+    @State private var currentNonce: String?
 
     var body: some View {
         NavigationStack {
@@ -148,6 +151,31 @@ struct AuthView: View {
                     RoundedRectangle(cornerRadius: 4)
                         .stroke(Color(red: 0x74/255, green: 0x77/255, blue: 0x75/255), lineWidth: 1)
                 )
+                .padding(.horizontal)
+                .disabled(authViewModel.isLoading)
+
+                // Sign in with Apple button
+                SignInWithAppleButton(.signIn) { request in
+                    let nonce = randomNonceString()
+                    currentNonce = nonce
+                    request.requestedScopes = [.fullName, .email]
+                    request.nonce = sha256(nonce)
+                } onCompletion: { result in
+                    switch result {
+                    case .success(let authorization):
+                        if let credential = authorization.credential as? ASAuthorizationAppleIDCredential,
+                           let nonce = currentNonce {
+                            Task {
+                                await authViewModel.signInWithApple(credential: credential, rawNonce: nonce)
+                            }
+                        }
+                    case .failure(let error):
+                        authViewModel.errorMessage = error.localizedDescription
+                    }
+                }
+                .signInWithAppleButtonStyle(.black)
+                .frame(height: 44)
+                .cornerRadius(4)
                 .padding(.horizontal)
                 .disabled(authViewModel.isLoading)
 
@@ -335,6 +363,24 @@ struct GoogleLogo: View {
             }
         }
     }
+}
+
+// MARK: - Sign in with Apple nonce helpers
+
+private func randomNonceString(length: Int = 32) -> String {
+    var randomBytes = [UInt8](repeating: 0, count: length)
+    let errorCode = SecRandomCopyBytes(kSecRandomDefault, randomBytes.count, &randomBytes)
+    if errorCode != errSecSuccess {
+        fatalError("Unable to generate nonce: \(errorCode)")
+    }
+    let charset: [Character] = Array("0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._")
+    return String(randomBytes.map { byte in charset[Int(byte) % charset.count] })
+}
+
+private func sha256(_ input: String) -> String {
+    let inputData = Data(input.utf8)
+    let hashedData = SHA256.hash(data: inputData)
+    return hashedData.compactMap { String(format: "%02x", $0) }.joined()
 }
 
 #Preview {
