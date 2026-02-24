@@ -645,7 +645,9 @@ struct EarthView: View {
             }
 
             // --- Earth fill (robust): clip screen rect by horizon half-space ---
-            let earthColor = Color(red: 50.0 / 255, green: 168.0 / 255, blue: 82.0 / 255).opacity(0.25)
+            let earthColor = isDaytime
+                ? Color(red: 50.0 / 255, green: 168.0 / 255, blue: 82.0 / 255).opacity(0.25)
+                : Color(red: 10.0 / 255, green: 50.0 / 255, blue: 20.0 / 255).opacity(0.60)
 
             if let R = rotationMatrix {
                 let halfW = size.width / 2
@@ -766,7 +768,7 @@ struct EarthView: View {
 
             // Scenery silhouettes (world-projected, near horizon)
             if let R = rotationMatrix {
-                let silhouetteColor = Color(white: 0.07)
+                let silhouetteColor = Color(white: 0.22)
                 let windowColor = Color(red: 1.0, green: 0.85, blue: 0.3).opacity(0.9)
 
                 func wd(az: Double, el: Double) -> (x: Double, y: Double, z: Double) {

@@ -12,7 +12,6 @@ class AuthViewModel: ObservableObject {
     @Published var errorMessage: String?
     @Published var isOffline = false
     @Published var needsEmailVerification = false
-    @Published var needsRealEmail = false
 
     private let authService = AuthService.shared
 
@@ -126,9 +125,6 @@ class AuthViewModel: ObservableObject {
             let user = try await authService.signInWithApple(credential: credential, rawNonce: rawNonce)
             currentUser = user
             isAuthenticated = true
-            if user.email.hasSuffix("@privaterelay.appleid.com") || user.email.isEmpty {
-                needsRealEmail = true
-            }
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -136,22 +132,6 @@ class AuthViewModel: ObservableObject {
         isLoading = false
     }
 
-    func provideRealEmail(_ email: String) async {
-        let trimmed = email.lowercased().trimmingCharacters(in: .whitespaces)
-        guard var user = currentUser else { needsRealEmail = false; return }
-        user.email = trimmed
-        do {
-            try await authService.saveUser(user)
-            currentUser = user
-        } catch {
-            // Non-fatal — still dismiss the sheet
-        }
-        needsRealEmail = false
-    }
-
-    func skipRealEmail() {
-        needsRealEmail = false
-    }
 
     func signOut() {
         // Stop Firestore listeners before signing out to prevent "client is offline" errors
