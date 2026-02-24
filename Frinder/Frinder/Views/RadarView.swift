@@ -586,7 +586,7 @@ struct EarthView: View {
             let roofType: SceneryBuilding.RoofType =
                 Double.random(in: 0 ... 1, using: &rng) < 0.2 ? .pointed : .flat
             var lit = [Bool]()
-            for _ in 0 ..< 8 { lit.append(Bool.random(using: &rng)) }
+            for _ in 0 ..< 32 { lit.append(Bool.random(using: &rng)) }
             buildings.append(SceneryBuilding(
                 azStart: az, azEnd: az + width,
                 heightAngle: h, roofType: roofType, litWindows: lit))
@@ -797,15 +797,16 @@ struct EarthView: View {
                             path.closeSubpath()
                             context.fill(path, with: .color(silhouetteColor))
                             if !isDaytime {
-                                let wW = max(1, abs(br.x - bl.x) * 0.07)
-                                let wH = max(1, abs(bl.y - tl.y) * 0.06)
-                                for row in 0 ..< 4 {
-                                    for col in 0 ..< 2 {
-                                        let idx = row * 2 + col
+                                let wW: CGFloat = 2.0
+                                let wH: CGFloat = 2.5
+                                let cols = 4, rows = 7
+                                for row in 0 ..< rows {
+                                    for col in 0 ..< cols {
+                                        let idx = row * cols + col
                                         guard idx < building.litWindows.count,
                                               building.litWindows[idx] else { continue }
-                                        let t = (Double(col) + 0.5) / 2.0
-                                        let v = (Double(row) + 0.5) / 4.0
+                                        let t = (Double(col) + 0.5) / Double(cols)
+                                        let v = (Double(row) + 0.5) / Double(rows)
                                         let bx = bl.x + (br.x - bl.x) * t
                                         let by = bl.y + (br.y - bl.y) * t
                                         let tx = tl.x + (tr.x - tl.x) * t
@@ -833,15 +834,16 @@ struct EarthView: View {
                             path.closeSubpath()
                             context.fill(path, with: .color(silhouetteColor))
                             if !isDaytime {
-                                let wW = max(1, abs(br.x - bl.x) * 0.07)
-                                let wH = max(1, abs(bl.y - tl.y) * 0.06)
-                                for row in 0 ..< 3 {
-                                    for col in 0 ..< 2 {
-                                        let idx = row * 2 + col
+                                let wW: CGFloat = 2.0
+                                let wH: CGFloat = 2.5
+                                let cols = 3, rows = 5
+                                for row in 0 ..< rows {
+                                    for col in 0 ..< cols {
+                                        let idx = row * cols + col
                                         guard idx < building.litWindows.count,
                                               building.litWindows[idx] else { continue }
-                                        let t = (Double(col) + 0.5) / 2.0
-                                        let v = (Double(row) + 0.5) / 3.0
+                                        let t = (Double(col) + 0.5) / Double(cols)
+                                        let v = (Double(row) + 0.5) / Double(rows)
                                         let bx = bl.x + (br.x - bl.x) * t
                                         let by = bl.y + (br.y - bl.y) * t
                                         let tx = tl.x + (tr.x - tl.x) * t
@@ -940,7 +942,7 @@ struct SceneryBuilding {
     let azEnd: Double      // right edge azimuth (radians)
     let heightAngle: Double
     let roofType: RoofType
-    let litWindows: [Bool] // 2 cols × 4 rows = 8 entries, row-major
+    let litWindows: [Bool] // up to 4 cols × 8 rows = 32 entries, row-major
 }
 
 struct CompassIndicator: View {
