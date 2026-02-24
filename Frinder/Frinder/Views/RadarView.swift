@@ -31,7 +31,9 @@ struct RadarView: View {
                         sunPosition: radarViewModel.sunScreenPosition(in: geometry.size),
                         moonPosition: radarViewModel.moonScreenPosition(in: geometry.size),
                         moonImageName: radarViewModel.moonImageName,
-                        rotationMatrix: radarViewModel.rotationMatrix)
+                        rotationMatrix: radarViewModel.rotationMatrix,
+                        environmentType: radarViewModel.environmentType,
+                        locationSeed: radarViewModel.locationSeed)
 
                     // Landmark dots (shown behind friends) - clustered when overlapping
                     if radarViewModel.showLandmarks {
@@ -495,6 +497,11 @@ struct EarthView: View {
     var moonPosition: CGPoint?
     var moonImageName: String?
     var rotationMatrix: CMRotationMatrix?
+    var environmentType: EnvironmentType = .nature
+    var locationSeed: UInt64 = 0
+
+    @State private var natureElements: [SceneryNatureElement] = []
+    @State private var buildings: [SceneryBuilding] = []
 
     private static let horizontalFOV: Double = 60.0
     private static let verticalFOV: Double = 90.0
@@ -541,6 +548,46 @@ struct EarthView: View {
                 opacity: 1.0)
         }
     }()
+
+    private static func generateNatureElements(seed: UInt64) -> [SceneryNatureElement] {
+        var rng = SeededRandomNumberGenerator(seed: seed &+ 1001)
+        var elements: [SceneryNatureElement] = []
+        let mountainCount = Int.random(in: 8 ... 12, using: &rng)
+        for _ in 0 ..< mountainCount {
+            let az = Double.random(in: 0 ... (2 * .pi), using: &rng)
+            let h = Double.random(in: 0.06 ... 0.25, using: &rng)
+            let w = Double.random(in: 15 * .pi / 180 ... 35 * .pi / 180, using: &rng)
+            elements.append(SceneryNatureElement(azimuth: az, heightAngle: h, halfWidth: w / 2, isMountain: true))
+        }
+        let treeCount = Int.random(in: 15 ... 20, using: &rng)
+        for _ in 0 ..< treeCount {
+            let az = Double.random(in: 0 ... (2 * .pi), using: &rng)
+            let h = Double.random(in: 0.04 ... 0.09, using: &rng)
+            let w = Double.random(in: 2 * .pi / 180 ... 5 * .pi / 180, using: &rng)
+            elements.append(SceneryNatureElement(azimuth: az, heightAngle: h, halfWidth: w / 2, isMountain: false))
+        }
+        return elements
+    }
+
+    private static func generateBuildings(seed: UInt64) -> [SceneryBuilding] {
+        var rng = SeededRandomNumberGenerator(seed: seed &+ 2002)
+        var buildings: [SceneryBuilding] = []
+        let count = Int.random(in: 10 ... 15, using: &rng)
+        for _ in 0 ..< count {
+            let az = Double.random(in: 0 ... (2 * .pi), using: &rng)
+            let h = Double.random(in: 0.06 ... 0.20, using: &rng)
+            let w = Double.random(in: 4 * .pi / 180 ... 10 * .pi / 180, using: &rng)
+            var lit = [Bool]()
+            for _ in 0 ..< 8 { lit.append(Bool.random(using: &rng)) }
+            buildings.append(SceneryBuilding(azimuth: az, heightAngle: h, halfWidth: w / 2, litWindows: lit))
+        }
+        return buildings
+    }
+
+    private func regenerateScenery(seed: UInt64) {
+        natureElements = Self.generateNatureElements(seed: seed)
+        buildings = Self.generateBuildings(seed: seed)
+    }
 
     /// Device roll angle from the rotation matrix (0 when upright)
     private static func deviceRoll(from R: CMRotationMatrix) -> Double {
@@ -685,6 +732,83 @@ struct EarthView: View {
                 }
             }
 
+            // Scenery silhouettes (world-projected, near horizon)
+            if let R = rotationMatrix {
+                let silhouetteColor = Color(white: 0.07)
+                let windowColor = Color(red: 1.0, green: 0.85, blue: 0.3).opacity(0.9)
+
+                func wd(az: Double, el: Double) -> (x: Double, y: Double, z: Double) {
+                    let c = cos(el)
+                    return (c * cos(az), -c * sin(az), sin(el))
+                }
+                func proj(_ d: (x: Double, y: Double, z: Double)) -> CGPoint? {
+                    GeoMath.projectToScreen(
+                        worldDirection: d,
+                        rotationMatrix: R,
+                        horizontalFOV: Self.horizontalFOV,
+                        verticalFOV: Self.verticalFOV,
+                        screenSize: size)
+                }
+
+                if environmentType == .nature {
+                    for elem in natureElements {
+                        let az = elem.azimuth
+                        let h = elem.heightAngle
+                        let hw = elem.halfWidth
+                        guard let bl = proj(wd(az: az - hw, el: 0)),
+                              let br = proj(wd(az: az + hw, el: 0)),
+                              let top = proj(wd(az: az, el: h)) else { continue }
+                        var path = Path()
+                        path.move(to: bl)
+                        path.addLine(to: top)
+                        path.addLine(to: br)
+                        path.closeSubpath()
+                        context.fill(path, with: .color(silhouetteColor))
+                    }
+                } else {
+                    for building in buildings {
+                        let az = building.azimuth
+                        let h = building.heightAngle
+                        let hw = building.halfWidth
+                        guard let bl = proj(wd(az: az - hw, el: 0)),
+                              let br = proj(wd(az: az + hw, el: 0)),
+                              let tl = proj(wd(az: az - hw, el: h)),
+                              let tr = proj(wd(az: az + hw, el: h)) else { continue }
+                        var path = Path()
+                        path.move(to: bl)
+                        path.addLine(to: br)
+                        path.addLine(to: tr)
+                        path.addLine(to: tl)
+                        path.closeSubpath()
+                        context.fill(path, with: .color(silhouetteColor))
+
+                        if !isDaytime {
+                            let bWidth = abs(br.x - bl.x)
+                            let bHeight = abs(bl.y - tl.y)
+                            let wW = max(2, bWidth * 0.25)
+                            let wH = max(2, bHeight * 0.15)
+                            for row in 0 ..< 4 {
+                                for col in 0 ..< 2 {
+                                    let idx = row * 2 + col
+                                    guard idx < building.litWindows.count,
+                                          building.litWindows[idx] else { continue }
+                                    let t = (Double(col) + 0.5) / 2.0
+                                    let v = (Double(row) + 0.5) / 4.0
+                                    let bx = bl.x + (br.x - bl.x) * t
+                                    let by = bl.y + (br.y - bl.y) * t
+                                    let tx = tl.x + (tr.x - tl.x) * t
+                                    let ty = tl.y + (tr.y - tl.y) * t
+                                    let wx = bx + (tx - bx) * v
+                                    let wy = by + (ty - by) * v
+                                    let rect = CGRect(x: wx - wW / 2, y: wy - wH / 2, width: wW, height: wH)
+                                    context.fill(Path(rect), with: .color(windowColor))
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
             // Stars (night only, world-projected)
             if !isDaytime, let R = rotationMatrix {
                 let resolvedStars = Self.starImageNames.map { context.resolve(Image($0)) }
@@ -733,6 +857,8 @@ struct EarthView: View {
             }
 
         }
+        .onAppear { regenerateScenery(seed: locationSeed) }
+        .onChange(of: locationSeed) { _, newSeed in regenerateScenery(seed: newSeed) }
     }
 }
 
@@ -751,6 +877,20 @@ struct SeededRandomNumberGenerator: RandomNumberGenerator {
         state ^= state << 17
         return state
     }
+}
+
+struct SceneryNatureElement {
+    let azimuth: Double    // radians from north, clockwise
+    let heightAngle: Double // elevation in radians
+    let halfWidth: Double   // angular half-width in radians
+    let isMountain: Bool
+}
+
+struct SceneryBuilding {
+    let azimuth: Double
+    let heightAngle: Double
+    let halfWidth: Double
+    let litWindows: [Bool] // 2 cols × 4 rows = 8 entries, row-major
 }
 
 struct CompassIndicator: View {

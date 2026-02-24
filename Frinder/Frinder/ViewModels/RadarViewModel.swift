@@ -4,6 +4,10 @@ import CoreLocation
 import CoreMotion
 import Combine
 
+enum EnvironmentType {
+    case nature, urban
+}
+
 @MainActor
 class RadarViewModel: ObservableObject {
     @Published var friends: [Friend] = []
@@ -14,6 +18,14 @@ class RadarViewModel: ObservableObject {
     @Published var locationAuthorizationStatus: CLAuthorizationStatus = .notDetermined
     @Published var targetFriend: Friend?
     @Published var friendLocations: [String: String] = [:]
+    @Published var environmentType: EnvironmentType = .nature
+
+    var locationSeed: UInt64 {
+        guard let loc = currentLocation else { return 0 }
+        let latGrid = Int(floor(loc.coordinate.latitude * 10))
+        let lonGrid = Int(floor(loc.coordinate.longitude * 10))
+        return UInt64(bitPattern: Int64(latGrid) &* 1_000_000 &+ Int64(lonGrid))
+    }
 
     let landmarks = Landmark.allLandmarks
     var showLandmarks: Bool { AppSettings.shared.disabledLandmarkIds.count < Landmark.allLandmarks.count }
@@ -75,6 +87,8 @@ class RadarViewModel: ObservableObject {
     private let geocoder = CLGeocoder()
     private var lastGeocodedCoordinates: [String: CLLocationCoordinate2D] = [:]
     private var geocodingInProgress = Set<String>()
+    private var lastUserGeocodedLocation: CLLocation?
+    private var userGeocodingInProgress = false
 
     func friendLocationLabel(for friendId: String) -> String? {
         friendLocations[friendId]
@@ -121,6 +135,30 @@ class RadarViewModel: ObservableObject {
         }
     }
 
+    private func reverseGeocodeUserLocationIfNeeded(_ location: CLLocation) {
+        if let last = lastUserGeocodedLocation, last.distance(from: location) < 500 { return }
+        guard !userGeocodingInProgress else { return }
+        userGeocodingInProgress = true
+        lastUserGeocodedLocation = location
+
+        Task { [weak self] in
+            let geocoder = CLGeocoder()
+            do {
+                let placemarks = try await geocoder.reverseGeocodeLocation(location)
+                await MainActor.run {
+                    if let placemark = placemarks.first {
+                        self?.environmentType = placemark.locality != nil ? .urban : .nature
+                    }
+                    self?.userGeocodingInProgress = false
+                }
+            } catch {
+                await MainActor.run {
+                    self?.userGeocodingInProgress = false
+                }
+            }
+        }
+    }
+
     init() {
         setupBindings()
     }
@@ -131,9 +169,12 @@ class RadarViewModel: ObservableObject {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] location in
                 self?.currentLocation = location
-                if let location = location, let userId = self?.userId {
-                    Task {
-                        try? await self?.updateUserLocation(location, userId: userId)
+                if let location = location {
+                    self?.reverseGeocodeUserLocationIfNeeded(location)
+                    if let userId = self?.userId {
+                        Task {
+                            try? await self?.updateUserLocation(location, userId: userId)
+                        }
                     }
                 }
             }
