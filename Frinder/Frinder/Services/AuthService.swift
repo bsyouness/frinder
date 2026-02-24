@@ -141,25 +141,40 @@ class AuthService {
             fullName: credential.fullName
         )
 
-        let authResult = try await auth.signIn(with: firebaseCredential)
+        do {
+            let authResult = try await auth.signIn(with: firebaseCredential)
 
-        if let existingUser = try await fetchUser(id: authResult.user.uid) {
-            return existingUser
+            if let existingUser = try await fetchUser(id: authResult.user.uid) {
+                return existingUser
+            }
+
+            // New Apple user — name is only provided on the first sign-in
+            let fullName = [credential.fullName?.givenName, credential.fullName?.familyName]
+                .compactMap { $0 }
+                .joined(separator: " ")
+                .trimmingCharacters(in: .whitespaces)
+            let email = credential.email ?? authResult.user.email ?? ""
+            let user = User(
+                id: authResult.user.uid,
+                email: email,
+                displayName: fullName.isEmpty ? "Apple User" : fullName
+            )
+            try await saveUser(user)
+            return user
+        } catch let error as NSError {
+            if error.code == AuthErrorCode.accountExistsWithDifferentCredential.rawValue {
+                let conflictEmail = (error.userInfo["FIRAuthErrorUserInfoEmailKey"] as? String)
+                    ?? credential.email
+                    ?? ""
+                if !conflictEmail.isEmpty {
+                    let providers = (try? await auth.fetchSignInMethods(forEmail: conflictEmail)) ?? []
+                    if !providers.isEmpty {
+                        throw AuthError.differentProvider(providers: providers)
+                    }
+                }
+            }
+            throw error
         }
-
-        // New Apple user — name is only provided on the first sign-in
-        let fullName = [credential.fullName?.givenName, credential.fullName?.familyName]
-            .compactMap { $0 }
-            .joined(separator: " ")
-            .trimmingCharacters(in: .whitespaces)
-        let email = credential.email ?? authResult.user.email ?? ""
-        let user = User(
-            id: authResult.user.uid,
-            email: email,
-            displayName: fullName.isEmpty ? "Apple User" : fullName
-        )
-        try await saveUser(user)
-        return user
     }
 
     func signOut() throws {
