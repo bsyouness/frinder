@@ -80,7 +80,7 @@
 	<key>GADApplicationIdentifier</key>
 	<string>ca-app-pub-7277027627144665~7386346325</string>
 	<key>NSUserTrackingUsageDescription</key>
-	<string>This identifier will be used to deliver personalized ads to you.</string>
+	<string>We use this to show you relevant ads and keep Frinder free.</string>
 	<key>SKAdNetworkItems</key>
 	<array>
 		<dict>
