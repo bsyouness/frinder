@@ -5,6 +5,7 @@ struct MainTabView: View {
     @StateObject private var radarViewModel = RadarViewModel()
     @StateObject private var friendsViewModel = FriendsViewModel()
     @State private var selectedTab = 0
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         ZStack(alignment: .top) {
@@ -54,6 +55,11 @@ struct MainTabView: View {
             }
             .onDisappear {
                 radarViewModel.stopTracking()
+            }
+            .onChange(of: scenePhase) { _, newPhase in
+                if newPhase == .active {
+                    radarViewModel.resumeMotionUpdates()
+                }
             }
 
             // Offline banner (non-dismissable)

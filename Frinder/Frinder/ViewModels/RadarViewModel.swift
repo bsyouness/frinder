@@ -232,6 +232,11 @@ class RadarViewModel: ObservableObject {
         friendService.stopListening()
     }
 
+    /// Call when returning to foreground — restarts CoreMotion without touching Firestore listeners.
+    func resumeMotionUpdates() {
+        motionService.startUpdates()
+    }
+
     private func updateUserLocation(_ location: CLLocation, userId: String) async throws {
         let userLocation = UserLocation(coordinate: location.coordinate)
         try await friendService.updateLocation(userLocation, for: userId)
