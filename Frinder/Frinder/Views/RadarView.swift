@@ -552,19 +552,15 @@ struct EarthView: View {
     private static func generateNatureElements(seed: UInt64) -> [SceneryNatureElement] {
         var rng = SeededRandomNumberGenerator(seed: seed &+ 1001)
         var elements: [SceneryNatureElement] = []
-        let mountainCount = Int.random(in: 8 ... 12, using: &rng)
-        for _ in 0 ..< mountainCount {
-            let az = Double.random(in: 0 ... (2 * .pi), using: &rng)
-            let h = Double.random(in: 0.06 ... 0.25, using: &rng)
-            let w = Double.random(in: 15 * .pi / 180 ... 35 * .pi / 180, using: &rng)
-            elements.append(SceneryNatureElement(azimuth: az, heightAngle: h, halfWidth: w / 2, isMountain: true))
-        }
-        let treeCount = Int.random(in: 15 ... 20, using: &rng)
-        for _ in 0 ..< treeCount {
-            let az = Double.random(in: 0 ... (2 * .pi), using: &rng)
-            let h = Double.random(in: 0.04 ... 0.09, using: &rng)
-            let w = Double.random(in: 2 * .pi / 180 ... 5 * .pi / 180, using: &rng)
-            elements.append(SceneryNatureElement(azimuth: az, heightAngle: h, halfWidth: w / 2, isMountain: false))
+        var az = 0.0
+        let twoPi = 2 * Double.pi
+        while az < twoPi {
+            let step = Double.random(in: 6 * .pi / 180 ... 12 * .pi / 180, using: &rng)
+            let halfWidth = Double.random(in: 12 * .pi / 180 ... 22 * .pi / 180, using: &rng)
+            let h = Double.random(in: 0.02 ... 0.085, using: &rng)
+            let center = az + step / 2
+            elements.append(SceneryNatureElement(azimuth: center, heightAngle: h, halfWidth: halfWidth))
+            az += step
         }
         return elements
     }
@@ -776,9 +772,38 @@ struct EarthView: View {
                 }
             }
 
+            // Clouds (day only, world-projected, skip any that overlap the sun or moon)
+            if isDaytime, let R = rotationMatrix {
+                let resolvedClouds = Self.cloudImageNames.map { context.resolve(Image($0)) }
+                let clearanceRadius: CGFloat = 120
+                for cloud in Self.clouds {
+                    guard let pt = GeoMath.projectToScreen(
+                        worldDirection: cloud.dir,
+                        rotationMatrix: R,
+                        horizontalFOV: Self.horizontalFOV,
+                        verticalFOV: Self.verticalFOV,
+                        screenSize: size) else { continue }
+                    // Skip clouds near the sun
+                    if let sp = sunPosition, hypot(pt.x - sp.x, pt.y - sp.y) < clearanceRadius { continue }
+                    // Skip clouds near the moon
+                    if let mp = moonPosition, hypot(pt.x - mp.x, pt.y - mp.y) < clearanceRadius { continue }
+                    let img = resolvedClouds[cloud.imageIndex]
+                    let w = img.size.width * cloud.scale * 3
+                    let h = img.size.height * cloud.scale * 3
+                    context.drawLayer { ctx in
+                        ctx.translateBy(x: pt.x, y: pt.y)
+                        ctx.rotate(by: Angle(radians: -roll))
+                        ctx.draw(img, in: CGRect(x: -w / 2, y: -h / 2, width: w, height: h))
+                    }
+                }
+            }
+
             // Scenery silhouettes (world-projected, near horizon)
             if let R = rotationMatrix {
-                let silhouetteColor = Color(white: 0.22)
+                let buildingColor = Color(white: 0.22)
+                let moundColor = isDaytime
+                    ? Color(red: 0.10, green: 0.45, blue: 0.42)
+                    : Color(red: 0.04, green: 0.12, blue: 0.09)
                 let windowColor = Color(red: 1.0, green: 0.85, blue: 0.3).opacity(0.9)
 
                 func wd(az: Double, el: Double) -> (x: Double, y: Double, z: Double) {
@@ -801,13 +826,17 @@ struct EarthView: View {
                         let hw = elem.halfWidth
                         guard let bl = proj(wd(az: az - hw, el: 0)),
                               let br = proj(wd(az: az + hw, el: 0)),
-                              let top = proj(wd(az: az, el: h)) else { continue }
+                              let peak = proj(wd(az: az, el: h)) else { continue }
+                        // Adjust control point so the Bezier actually passes through `peak`
+                        let control = CGPoint(
+                            x: 2 * peak.x - (bl.x + br.x) / 2,
+                            y: 2 * peak.y - (bl.y + br.y) / 2
+                        )
                         var path = Path()
                         path.move(to: bl)
-                        path.addLine(to: top)
-                        path.addLine(to: br)
+                        path.addQuadCurve(to: br, control: control)
                         path.closeSubpath()
-                        context.fill(path, with: .color(silhouetteColor))
+                        context.fill(path, with: .color(moundColor))
                     }
                 } else {
                     for building in buildings {
@@ -828,7 +857,7 @@ struct EarthView: View {
                             path.addLine(to: tr)
                             path.addLine(to: br)
                             path.closeSubpath()
-                            context.fill(path, with: .color(silhouetteColor))
+                            context.fill(path, with: .color(buildingColor))
                             if !isDaytime {
                                 let wW: CGFloat = 2.0
                                 let wH: CGFloat = 2.5
@@ -865,7 +894,7 @@ struct EarthView: View {
                             path.addLine(to: tr)
                             path.addLine(to: br)
                             path.closeSubpath()
-                            context.fill(path, with: .color(silhouetteColor))
+                            context.fill(path, with: .color(buildingColor))
                             if !isDaytime {
                                 let wW: CGFloat = 2.0
                                 let wH: CGFloat = 2.5
@@ -888,32 +917,6 @@ struct EarthView: View {
                                 }
                             }
                         }
-                    }
-                }
-            }
-
-            // Clouds (day only, world-projected, skip any that overlap the sun or moon)
-            if isDaytime, let R = rotationMatrix {
-                let resolvedClouds = Self.cloudImageNames.map { context.resolve(Image($0)) }
-                let clearanceRadius: CGFloat = 120
-                for cloud in Self.clouds {
-                    guard let pt = GeoMath.projectToScreen(
-                        worldDirection: cloud.dir,
-                        rotationMatrix: R,
-                        horizontalFOV: Self.horizontalFOV,
-                        verticalFOV: Self.verticalFOV,
-                        screenSize: size) else { continue }
-                    // Skip clouds near the sun
-                    if let sp = sunPosition, hypot(pt.x - sp.x, pt.y - sp.y) < clearanceRadius { continue }
-                    // Skip clouds near the moon
-                    if let mp = moonPosition, hypot(pt.x - mp.x, pt.y - mp.y) < clearanceRadius { continue }
-                    let img = resolvedClouds[cloud.imageIndex]
-                    let w = img.size.width * cloud.scale * 3
-                    let h = img.size.height * cloud.scale * 3
-                    context.drawLayer { ctx in
-                        ctx.translateBy(x: pt.x, y: pt.y)
-                        ctx.rotate(by: Angle(radians: -roll))
-                        ctx.draw(img, in: CGRect(x: -w / 2, y: -h / 2, width: w, height: h))
                     }
                 }
             }
@@ -945,7 +948,6 @@ struct SceneryNatureElement {
     let azimuth: Double    // radians from north, clockwise
     let heightAngle: Double // elevation in radians
     let halfWidth: Double   // angular half-width in radians
-    let isMountain: Bool
 }
 
 struct SceneryBuilding {
