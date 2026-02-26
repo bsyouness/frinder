@@ -1,16 +1,24 @@
 import UIKit
 import FirebaseMessaging
 import UserNotifications
+import AppTrackingTransparency
+import GoogleMobileAds
 
 class AppDelegate: NSObject, UIApplicationDelegate {
     func application(
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
     ) -> Bool {
-        // Set UNUserNotificationCenter delegate
         UNUserNotificationCenter.current().delegate = self
-
+        MobileAds.shared.start(completionHandler: nil)
         return true
+    }
+
+    func applicationDidBecomeActive(_ application: UIApplication) {
+        // Only shows the dialog once (when status is .notDetermined); instant no-op thereafter
+        Task { @MainActor in
+            await ATTrackingManager.requestTrackingAuthorization()
+        }
     }
 
     func application(
