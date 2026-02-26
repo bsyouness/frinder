@@ -56,5 +56,4 @@ functions/lib/
 .firebase/
 
 # VSCode files
-.vscodeMakefile
-ExportOptions.plist
+.vscodeExportOptions.plist

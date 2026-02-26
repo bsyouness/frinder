@@ -1,4 +1,30 @@
-.PHONY: deploy-website bump-version serve-website
+ARCHIVE_PATH = /tmp/Frinder.xcarchive
+EXPORT_PATH  = /tmp/FrinderExport
+
+.PHONY: deploy-website bump-version serve-website archive upload
+
+archive:
+	xcodebuild archive \
+		-project Frinder/Frinder.xcodeproj \
+		-scheme Frinder \
+		-destination "generic/platform=iOS" \
+		-archivePath $(ARCHIVE_PATH) \
+		-allowProvisioningUpdates
+	@echo "Archive saved to $(ARCHIVE_PATH)"
+
+upload: archive
+	xcodebuild -exportArchive \
+		-archivePath $(ARCHIVE_PATH) \
+		-exportPath $(EXPORT_PATH) \
+		-exportOptionsPlist ExportOptions.plist \
+		-allowProvisioningUpdates
+	xcrun altool --upload-app \
+		-f $(EXPORT_PATH)/Frinder.ipa \
+		-t ios \
+		-u "$$APPLE_ID" \
+		-p "$$APPLE_APP_PASSWORD" \
+		--output-format xml
+	@echo "Upload complete"
 
 bump-version:
 ifndef VERSION
