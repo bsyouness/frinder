@@ -800,7 +800,9 @@ struct EarthView: View {
 
             // Scenery silhouettes (world-projected, near horizon)
             if let R = rotationMatrix {
-                let buildingColor = Color(white: 0.22)
+                let buildingColor = isDaytime
+                    ? Color(red: 0.14, green: 0.15, blue: 0.18)  // dark slate, clearly below earth
+                    : Color(white: 0.06)                           // near-black, below dark earth
                 let moundColor = isDaytime
                     ? Color(red: 0.10, green: 0.45, blue: 0.42)
                     : Color(red: 0.04, green: 0.12, blue: 0.09)
