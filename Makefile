@@ -4,13 +4,18 @@ EXPORT_PATH  = /tmp/FrinderExport
 .PHONY: deploy-website bump-version serve-website archive upload
 
 archive:
+	$(eval BUILD_NUM := $(shell date +%Y%m%d%H%M))
+	@echo "Setting build number to $(BUILD_NUM)"
+	@sed -i '' 's/CURRENT_PROJECT_VERSION = .*;/CURRENT_PROJECT_VERSION = $(BUILD_NUM);/g' \
+		Frinder/Frinder.xcodeproj/project.pbxproj
 	xcodebuild archive \
 		-project Frinder/Frinder.xcodeproj \
 		-scheme Frinder \
 		-destination "generic/platform=iOS" \
 		-archivePath $(ARCHIVE_PATH) \
 		-allowProvisioningUpdates
-	@echo "Archive saved to $(ARCHIVE_PATH)"
+	@echo "Archive saved to $(ARCHIVE_PATH) (build $(BUILD_NUM))"
+	@git checkout Frinder/Frinder.xcodeproj/project.pbxproj
 
 upload: archive
 	xcodebuild -exportArchive \
