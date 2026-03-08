@@ -21,6 +21,7 @@ struct EditProfileView: View {
     // Feedback
     @State private var errorMessage: String?
     @State private var successMessage: String?
+    @State private var showDeleteConfirmation = false
 
     private var avatarURL: URL? {
         guard let str = authViewModel.currentUser?.avatarURL else { return nil }
@@ -78,6 +79,33 @@ struct EditProfileView: View {
                     }
                     .disabled(newPassword.isEmpty || isChangingPassword)
                 }
+            }
+
+            // MARK: Delete Account
+            Section {
+                Button(role: .destructive) {
+                    showDeleteConfirmation = true
+                } label: {
+                    HStack {
+                        Spacer()
+                        Text("Delete Account")
+                        Spacer()
+                    }
+                }
+            } footer: {
+                Text("Permanently deletes your account and all associated data. This cannot be undone.")
+            }
+            .confirmationDialog(
+                "Delete Account",
+                isPresented: $showDeleteConfirmation,
+                titleVisibility: .visible
+            ) {
+                Button("Delete Account", role: .destructive) {
+                    Task { await authViewModel.deleteAccount() }
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("This will permanently delete your account and all associated data. This action cannot be undone.")
             }
 
             // MARK: Feedback
