@@ -234,6 +234,8 @@ class RadarViewModel: ObservableObject {
 
     /// Call when returning to foreground — restarts CoreMotion without touching Firestore listeners.
     func resumeMotionUpdates() {
+        // Clear stale matrix so the view shows nothing rather than animating through old positions
+        motionService.rotationMatrix = nil
         motionService.startUpdates()
     }
 
