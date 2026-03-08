@@ -225,6 +225,7 @@ struct AuthView: View {
                 Text("If an account exists for \(resetEmail), you'll receive a password reset link. Check your spam folder if you don't see it.")
             }
         }
+        .preferredColorScheme(.light)
     }
 
     private var isFormValid: Bool {
