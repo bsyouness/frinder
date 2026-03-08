@@ -152,6 +152,21 @@ class AuthViewModel: ObservableObject {
         }
     }
 
+    func deleteAccount() async {
+        FriendService.shared.stopListening()
+        await NotificationService.shared.removeToken()
+        do {
+            try await authService.deleteAccount()
+            currentUser = nil
+            isAuthenticated = false
+            errorMessage = nil
+        } catch AuthError.requiresRecentLogin {
+            errorMessage = "Please sign out and sign back in, then try deleting your account again."
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
     func sendPasswordReset(email: String) async -> Bool {
         isLoading = true
         errorMessage = nil

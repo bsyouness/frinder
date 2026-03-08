@@ -3,6 +3,7 @@ import SwiftUI
 struct SettingsView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
     @ObservedObject var settings = AppSettings.shared
+    @State private var showDeleteConfirmation = false
 
     var body: some View {
         NavigationStack {
@@ -122,7 +123,7 @@ struct SettingsView: View {
                     .foregroundStyle(.primary)
                 }
 
-                // Sign out section
+                // Account actions section
                 Section {
                     Button(role: .destructive) {
                         authViewModel.signOut()
@@ -133,6 +134,31 @@ struct SettingsView: View {
                             Spacer()
                         }
                     }
+
+                    Button(role: .destructive) {
+                        showDeleteConfirmation = true
+                    } label: {
+                        HStack {
+                            Spacer()
+                            Text("Delete Account")
+                            Spacer()
+                        }
+                    }
+                } footer: {
+                    Text("Deleting your account is permanent and cannot be undone. All your data will be removed immediately.")
+                        .foregroundStyle(.secondary)
+                }
+                .confirmationDialog(
+                    "Delete Account",
+                    isPresented: $showDeleteConfirmation,
+                    titleVisibility: .visible
+                ) {
+                    Button("Delete Account", role: .destructive) {
+                        Task { await authViewModel.deleteAccount() }
+                    }
+                    Button("Cancel", role: .cancel) {}
+                } message: {
+                    Text("This will permanently delete your account and all associated data. This action cannot be undone.")
                 }
             }
             .navigationTitle("Settings")

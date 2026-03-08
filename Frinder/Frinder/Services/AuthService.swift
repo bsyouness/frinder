@@ -182,6 +182,19 @@ class AuthService {
         try auth.signOut()
     }
 
+    func deleteAccount() async throws {
+        guard let user = auth.currentUser, let uid = currentUserId else {
+            throw AuthError.notAuthenticated
+        }
+        do {
+            try await db.collection("users").document(uid).delete()
+            try await user.delete()
+            GIDSignIn.sharedInstance.signOut()
+        } catch let error as NSError where error.code == AuthErrorCode.requiresRecentLogin.rawValue {
+            throw AuthError.requiresRecentLogin
+        }
+    }
+
     func sendPasswordReset(email: String) async throws {
         let normalised = email.lowercased().trimmingCharacters(in: .whitespaces)
         let providers = try? await auth.fetchSignInMethods(forEmail: normalised)
