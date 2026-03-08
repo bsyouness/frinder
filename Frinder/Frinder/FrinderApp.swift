@@ -1,11 +1,13 @@
 import SwiftUI
 import FirebaseCore
 import GoogleSignIn
+import AppTrackingTransparency
 
 @main
 struct FrinderApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @StateObject private var authViewModel = AuthViewModel()
+    @Environment(\.scenePhase) private var scenePhase
 
     init() {
         FirebaseApp.configure()
@@ -28,6 +30,13 @@ struct FrinderApp: App {
                         NotificationService.shared.configure(userId: user.id)
                     }
                 }
+        }
+        .onChange(of: scenePhase) { _, newPhase in
+            if newPhase == .active {
+                Task {
+                    await ATTrackingManager.requestTrackingAuthorization()
+                }
+            }
         }
     }
 }
