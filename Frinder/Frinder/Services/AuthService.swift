@@ -247,7 +247,7 @@ class AuthService {
         guard let uid = currentUserId else {
             throw AuthError.notAuthenticated
         }
-        let storageRef = Storage.storage().reference().child("avatars/\(uid).jpg")
+        let storageRef = Storage.storage().reference().child("avatars/\(uid)")
         let metadata = StorageMetadata()
         metadata.contentType = "image/jpeg"
         _ = try await storageRef.putDataAsync(imageData, metadata: metadata)
