@@ -1,7 +1,7 @@
 ARCHIVE_PATH = /tmp/Frinder.xcarchive
 EXPORT_PATH  = /tmp/FrinderExport
 
-.PHONY: deploy-website bump-version serve-website archive upload
+.PHONY: deploy-website bump-version serve-website archive upload publish
 
 archive:
 	$(eval BUILD_NUM := $(shell date +%Y%m%d%H%M))
@@ -14,15 +14,15 @@ archive:
 		-destination "generic/platform=iOS" \
 		-archivePath $(ARCHIVE_PATH) \
 		-allowProvisioningUpdates
-	@echo "Archive saved to $(ARCHIVE_PATH) (build $(BUILD_NUM))"
 	@git checkout Frinder/Frinder.xcodeproj/project.pbxproj
-
-upload: archive
 	xcodebuild -exportArchive \
 		-archivePath $(ARCHIVE_PATH) \
 		-exportPath $(EXPORT_PATH) \
 		-exportOptionsPlist ExportOptions.plist \
 		-allowProvisioningUpdates
+	@echo "Archive and export complete — build $(BUILD_NUM), IPA at $(EXPORT_PATH)/Frinder.ipa"
+
+upload:
 	xcrun altool --upload-app \
 		-f $(EXPORT_PATH)/Frinder.ipa \
 		-t ios \
@@ -30,6 +30,8 @@ upload: archive
 		-p "$$APPLE_APP_PASSWORD" \
 		--output-format xml
 	@echo "Upload complete"
+
+publish: archive upload
 
 bump-version:
 ifndef VERSION
