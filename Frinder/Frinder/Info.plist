@@ -45,9 +45,7 @@
 	<false/>
 	<key>GIDClientID</key>
 	<string>866948090426-n2402flk1c9sst9tachlgr75eekeag3p.apps.googleusercontent.com</string>
-	<key>LSRequiresIPhoneOS</key>
-	<true/>
-	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>Frinder needs your location even in the background to keep your friends updated on where you are.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Frinder needs your location to show your friends where you are and to display where they are relative to you.</string>
@@ -72,7 +70,6 @@
 	</dict>
 	<key>UIRequiredDeviceCapabilities</key>
 	<array>
-		<string>armv7</string>
 		<string>location-services</string>
 		<string>magnetometer</string>
 		<string>gyroscope</string>
@@ -93,6 +90,13 @@
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
+	</array>
+	<key>UISupportedInterfaceOrientations~ipad</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationPortraitUpsideDown</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 </dict>
 </plist>
