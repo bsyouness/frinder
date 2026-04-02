@@ -85,6 +85,40 @@
 			<string>cstr6suwn9.skadnetwork</string>
 		</dict>
 	</array>
+	<key>CFBundleIcons</key>
+	<dict>
+		<key>CFBundleAlternateIcons</key>
+		<dict>
+			<key>city</key>
+			<dict>
+				<key>CFBundleIconFiles</key>
+				<array>
+					<string>city</string>
+				</array>
+			</dict>
+			<key>farm</key>
+			<dict>
+				<key>CFBundleIconFiles</key>
+				<array>
+					<string>farm</string>
+				</array>
+			</dict>
+			<key>shop</key>
+			<dict>
+				<key>CFBundleIconFiles</key>
+				<array>
+					<string>shop</string>
+				</array>
+			</dict>
+			<key>suburb</key>
+			<dict>
+				<key>CFBundleIconFiles</key>
+				<array>
+					<string>suburb</string>
+				</array>
+			</dict>
+		</dict>
+	</dict>
 	<key>UIStatusBarStyle</key>
 	<string>UIStatusBarStyleLightContent</string>
 	<key>UISupportedInterfaceOrientations</key>

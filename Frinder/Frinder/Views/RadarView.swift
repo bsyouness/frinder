@@ -501,13 +501,16 @@ struct EarthView: View {
     var locationSeed: UInt64 = 0
 
     @State private var natureElements: [SceneryNatureElement] = []
-    @State private var buildings: [SceneryBuilding] = []
+    @State private var citySprites: [CitySprite] = []
+    @State private var natureSprites: [NatureSprite] = []
 
     private static let horizontalFOV: Double = 60.0
     private static let verticalFOV: Double = 90.0
 
     private static let starImageNames = ["star1", "star2", "star3", "star4", "star5"]
     private static let cloudImageNames = ["cloud1", "cloud2", "cloud3", "cloud4", "cloud5"]
+    private static let cityImageNames = ["building1", "house1", "house2", "house3", "house4", "townhouse1"]
+    private static let natureImageNames = ["tree1", "tree2", "tree3", "tree4", "rock1", "rock2"]
 
     /// Fixed star world directions + visual properties
     private static let stars: [(
@@ -565,35 +568,50 @@ struct EarthView: View {
         return elements
     }
 
-    private static func generateBuildings(seed: UInt64) -> [SceneryBuilding] {
+    private static func generateCitySprites(seed: UInt64) -> [CitySprite] {
         var rng = SeededRandomNumberGenerator(seed: seed &+ 2002)
-        var buildings: [SceneryBuilding] = []
+        var sprites: [CitySprite] = []
         var az = 0.0
         let twoPi = 2 * Double.pi
         while az < twoPi {
-            let width = Double.random(in: 1.5 * .pi / 180 ... 8.0 * .pi / 180, using: &rng)
-            // Bimodal heights: mostly short/medium, ~15% tall
+            let idx = Int.random(in: 0 ..< 6, using: &rng)
             let h: Double
-            if Double.random(in: 0 ... 1, using: &rng) < 0.15 {
-                h = Double.random(in: 0.14 ... 0.24, using: &rng)
+            if idx == 0 {  // building1 is the tall skyscraper
+                h = Double.random(in: 0.14 ... 0.22, using: &rng)
             } else {
-                h = Double.random(in: 0.02 ... 0.11, using: &rng)
+                h = Double.random(in: 0.05 ... 0.12, using: &rng)
             }
-            let roofType: SceneryBuilding.RoofType =
-                Double.random(in: 0 ... 1, using: &rng) < 0.2 ? .pointed : .flat
-            var lit = [Bool]()
-            for _ in 0 ..< 32 { lit.append(Bool.random(using: &rng)) }
-            buildings.append(SceneryBuilding(
-                azStart: az, azEnd: az + width,
-                heightAngle: h, roofType: roofType, litWindows: lit))
-            az += width
+            sprites.append(CitySprite(azimuth: az, heightAngle: h, spriteIndex: idx))
+            let step = h * 1.2 + Double.random(in: 0.015 ... 0.04, using: &rng)
+            az += step
         }
-        return buildings
+        return sprites
+    }
+
+    private static func generateNatureSprites(seed: UInt64) -> [NatureSprite] {
+        var rng = SeededRandomNumberGenerator(seed: seed &+ 3003)
+        var sprites: [NatureSprite] = []
+        var az = 0.0
+        let twoPi = 2 * Double.pi
+        while az < twoPi {
+            let idx = Int.random(in: 0 ..< 6, using: &rng)  // 0-3 trees, 4-5 rocks
+            let h: Double
+            if idx < 4 {  // trees
+                h = Double.random(in: 0.08 ... 0.15, using: &rng)
+            } else {  // rocks
+                h = Double.random(in: 0.04 ... 0.08, using: &rng)
+            }
+            sprites.append(NatureSprite(azimuth: az, heightAngle: h, spriteIndex: idx))
+            let step = h * 1.0 + Double.random(in: 0.04 ... 0.12, using: &rng)
+            az += step
+        }
+        return sprites
     }
 
     private func regenerateScenery(seed: UInt64) {
         natureElements = Self.generateNatureElements(seed: seed)
-        buildings = Self.generateBuildings(seed: seed)
+        citySprites = Self.generateCitySprites(seed: seed)
+        natureSprites = Self.generateNatureSprites(seed: seed)
     }
 
     /// Device roll angle from the rotation matrix (0 when upright)
@@ -800,13 +818,9 @@ struct EarthView: View {
 
             // Scenery silhouettes (world-projected, near horizon)
             if let R = rotationMatrix {
-                let buildingColor = isDaytime
-                    ? Color(red: 0.14, green: 0.15, blue: 0.18)  // dark slate, clearly below earth
-                    : Color(white: 0.06)                           // near-black, below dark earth
                 let moundColor = isDaytime
                     ? Color(red: 0.10, green: 0.45, blue: 0.42)
                     : Color(red: 0.04, green: 0.12, blue: 0.09)
-                let windowColor = Color(red: 1.0, green: 0.85, blue: 0.3).opacity(0.9)
 
                 func wd(az: Double, el: Double) -> (x: Double, y: Double, z: Double) {
                     let c = cos(el)
@@ -822,6 +836,7 @@ struct EarthView: View {
                 }
 
                 if environmentType == .nature {
+                    // Draw mounds
                     for elem in natureElements {
                         let az = elem.azimuth
                         let h = elem.heightAngle
@@ -829,7 +844,6 @@ struct EarthView: View {
                         guard let bl = proj(wd(az: az - hw, el: 0)),
                               let br = proj(wd(az: az + hw, el: 0)),
                               let peak = proj(wd(az: az, el: h)) else { continue }
-                        // Adjust control point so the Bezier actually passes through `peak`
                         let control = CGPoint(
                             x: 2 * peak.x - (bl.x + br.x) / 2,
                             y: 2 * peak.y - (bl.y + br.y) / 2
@@ -840,85 +854,43 @@ struct EarthView: View {
                         path.closeSubpath()
                         context.fill(path, with: .color(moundColor))
                     }
+
+                    // Draw trees and rocks in front of mounds
+                    let natureImages = Self.natureImageNames.map { context.resolve(Image($0)) }
+                    for sprite in natureSprites {
+                        let az = sprite.azimuth
+                        let h = sprite.heightAngle
+                        guard let base = proj(wd(az: az, el: 0)),
+                              let top = proj(wd(az: az, el: h)) else { continue }
+                        let screenH = base.y - top.y
+                        guard screenH > 4 else { continue }
+                        let img = natureImages[sprite.spriteIndex]
+                        let aspect = img.size.width / max(img.size.height, 1)
+                        let screenW = screenH * aspect
+                        context.draw(img, in: CGRect(
+                            x: base.x - screenW / 2,
+                            y: base.y - screenH,
+                            width: screenW,
+                            height: screenH))
+                    }
                 } else {
-                    for building in buildings {
-                        let h = building.heightAngle
-                        let azS = building.azStart
-                        let azE = building.azEnd
-                        let azC = (azS + azE) / 2
-
-                        switch building.roofType {
-                        case .flat:
-                            guard let bl = proj(wd(az: azS, el: 0)),
-                                  let br = proj(wd(az: azE, el: 0)),
-                                  let tl = proj(wd(az: azS, el: h)),
-                                  let tr = proj(wd(az: azE, el: h)) else { continue }
-                            var path = Path()
-                            path.move(to: bl)
-                            path.addLine(to: tl)
-                            path.addLine(to: tr)
-                            path.addLine(to: br)
-                            path.closeSubpath()
-                            context.fill(path, with: .color(buildingColor))
-                            if !isDaytime {
-                                let wW: CGFloat = 2.0
-                                let wH: CGFloat = 2.5
-                                let cols = 4, rows = 7
-                                for row in 0 ..< rows {
-                                    for col in 0 ..< cols {
-                                        let idx = row * cols + col
-                                        guard idx < building.litWindows.count,
-                                              building.litWindows[idx] else { continue }
-                                        let t = (Double(col) + 0.5) / Double(cols)
-                                        let v = (Double(row) + 0.5) / Double(rows)
-                                        let bx = bl.x + (br.x - bl.x) * t
-                                        let by = bl.y + (br.y - bl.y) * t
-                                        let tx = tl.x + (tr.x - tl.x) * t
-                                        let ty = tl.y + (tr.y - tl.y) * t
-                                        let wx = bx + (tx - bx) * v
-                                        let wy = by + (ty - by) * v
-                                        context.fill(Path(CGRect(x: wx - wW / 2, y: wy - wH / 2, width: wW, height: wH)), with: .color(windowColor))
-                                    }
-                                }
-                            }
-
-                        case .pointed:
-                            let bodyH = h * 0.65
-                            guard let bl = proj(wd(az: azS, el: 0)),
-                                  let br = proj(wd(az: azE, el: 0)),
-                                  let tl = proj(wd(az: azS, el: bodyH)),
-                                  let tr = proj(wd(az: azE, el: bodyH)),
-                                  let peak = proj(wd(az: azC, el: h)) else { continue }
-                            var path = Path()
-                            path.move(to: bl)
-                            path.addLine(to: tl)
-                            path.addLine(to: peak)
-                            path.addLine(to: tr)
-                            path.addLine(to: br)
-                            path.closeSubpath()
-                            context.fill(path, with: .color(buildingColor))
-                            if !isDaytime {
-                                let wW: CGFloat = 2.0
-                                let wH: CGFloat = 2.5
-                                let cols = 3, rows = 5
-                                for row in 0 ..< rows {
-                                    for col in 0 ..< cols {
-                                        let idx = row * cols + col
-                                        guard idx < building.litWindows.count,
-                                              building.litWindows[idx] else { continue }
-                                        let t = (Double(col) + 0.5) / Double(cols)
-                                        let v = (Double(row) + 0.5) / Double(rows)
-                                        let bx = bl.x + (br.x - bl.x) * t
-                                        let by = bl.y + (br.y - bl.y) * t
-                                        let tx = tl.x + (tr.x - tl.x) * t
-                                        let ty = tl.y + (tr.y - tl.y) * t
-                                        let wx = bx + (tx - bx) * v
-                                        let wy = by + (ty - by) * v
-                                        context.fill(Path(CGRect(x: wx - wW / 2, y: wy - wH / 2, width: wW, height: wH)), with: .color(windowColor))
-                                    }
-                                }
-                            }
-                        }
+                    // Draw city building sprites
+                    let cityImages = Self.cityImageNames.map { context.resolve(Image($0)) }
+                    for sprite in citySprites {
+                        let az = sprite.azimuth
+                        let h = sprite.heightAngle
+                        guard let base = proj(wd(az: az, el: 0)),
+                              let top = proj(wd(az: az, el: h)) else { continue }
+                        let screenH = base.y - top.y
+                        guard screenH > 4 else { continue }
+                        let img = cityImages[sprite.spriteIndex]
+                        let aspect = img.size.width / max(img.size.height, 1)
+                        let screenW = screenH * aspect
+                        context.draw(img, in: CGRect(
+                            x: base.x - screenW / 2,
+                            y: base.y - screenH,
+                            width: screenW,
+                            height: screenH))
                     }
                 }
             }
@@ -952,13 +924,16 @@ struct SceneryNatureElement {
     let halfWidth: Double   // angular half-width in radians
 }
 
-struct SceneryBuilding {
-    enum RoofType { case flat, pointed }
-    let azStart: Double    // left edge azimuth (radians)
-    let azEnd: Double      // right edge azimuth (radians)
-    let heightAngle: Double
-    let roofType: RoofType
-    let litWindows: [Bool] // up to 4 cols × 8 rows = 32 entries, row-major
+struct CitySprite {
+    let azimuth: Double     // center azimuth in radians
+    let heightAngle: Double // angular height for scaling
+    let spriteIndex: Int    // 0-5: building1, house1-4, townhouse1
+}
+
+struct NatureSprite {
+    let azimuth: Double     // center azimuth in radians
+    let heightAngle: Double // angular height for scaling
+    let spriteIndex: Int    // 0-3: tree1-4, 4-5: rock1-2
 }
 
 struct CompassIndicator: View {

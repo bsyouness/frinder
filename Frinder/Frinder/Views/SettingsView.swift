@@ -1,8 +1,28 @@
 import SwiftUI
+import UIKit
+
+enum AppIconOption: String, CaseIterable {
+    case original
+    case city
+    case farm
+    case shop
+    case suburb
+
+    var alternateIconName: String? { self == .original ? nil : rawValue }
+    var displayName: String { self == .original ? "Original" : rawValue.capitalized }
+    var previewImage: String? { self == .original ? nil : rawValue }
+
+    static var current: AppIconOption {
+        if let name = UIApplication.shared.alternateIconName,
+           let option = AppIconOption(rawValue: name) { return option }
+        return .original
+    }
+}
 
 struct SettingsView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
     @ObservedObject var settings = AppSettings.shared
+    @State private var selectedIcon = AppIconOption.current
 
     var body: some View {
         NavigationStack {
@@ -120,6 +140,43 @@ struct SettingsView: View {
                         }
                     }
                     .foregroundStyle(.primary)
+                }
+
+                // App Icon section
+                Section("App Icon") {
+                    ForEach(AppIconOption.allCases, id: \.rawValue) { option in
+                        Button {
+                            UIApplication.shared.setAlternateIconName(option.alternateIconName) { _ in
+                                selectedIcon = AppIconOption.current
+                            }
+                        } label: {
+                            HStack(spacing: 12) {
+                                if let imgName = option.previewImage {
+                                    Image(imgName)
+                                        .resizable()
+                                        .scaledToFit()
+                                        .frame(width: 44, height: 44)
+                                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                                } else {
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .fill(Color.blue.opacity(0.15))
+                                        .frame(width: 44, height: 44)
+                                        .overlay(
+                                            Image(systemName: "app.fill")
+                                                .font(.title2)
+                                                .foregroundStyle(.blue)
+                                        )
+                                }
+                                Text(option.displayName)
+                                Spacer()
+                                if option == selectedIcon {
+                                    Image(systemName: "checkmark")
+                                        .foregroundStyle(.blue)
+                                }
+                            }
+                        }
+                        .foregroundStyle(.primary)
+                    }
                 }
 
                 // Sign out section
