@@ -8,6 +8,8 @@ class LocationService: NSObject, ObservableObject {
     private let locationManager = CLLocationManager()
     private var locationSubject = PassthroughSubject<CLLocation, Never>()
     private var headingSubject = PassthroughSubject<CLHeading, Never>()
+    private var isUpdatingLocation = false
+    private var isUpdatingHeading = false
 
     @Published var currentLocation: CLLocation?
     @Published var currentHeading: Double = 0
@@ -35,20 +37,26 @@ class LocationService: NSObject, ObservableObject {
     }
 
     func startUpdatingLocation() {
+        guard !isUpdatingLocation else { return }
+        isUpdatingLocation = true
         locationManager.startUpdatingLocation()
     }
 
     func stopUpdatingLocation() {
+        guard isUpdatingLocation else { return }
+        isUpdatingLocation = false
         locationManager.stopUpdatingLocation()
     }
 
     func startUpdatingHeading() {
-        if CLLocationManager.headingAvailable() {
-            locationManager.startUpdatingHeading()
-        }
+        guard !isUpdatingHeading, CLLocationManager.headingAvailable() else { return }
+        isUpdatingHeading = true
+        locationManager.startUpdatingHeading()
     }
 
     func stopUpdatingHeading() {
+        guard isUpdatingHeading else { return }
+        isUpdatingHeading = false
         locationManager.stopUpdatingHeading()
     }
 }

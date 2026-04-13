@@ -89,6 +89,7 @@ class RadarViewModel: ObservableObject {
     private var geocodingInProgress = Set<String>()
     private var lastUserGeocodedLocation: CLLocation?
     private var userGeocodingInProgress = false
+    private var isTracking = false
 
     func friendLocationLabel(for friendId: String) -> String? {
         friendLocations[friendId]
@@ -218,6 +219,11 @@ class RadarViewModel: ObservableObject {
 
     func startTracking(userId: String) {
         self.userId = userId
+        guard !isTracking else {
+            resumeLiveUpdates()
+            return
+        }
+        isTracking = true
         locationService.requestAuthorization()
         locationService.startUpdatingLocation()
         locationService.startUpdatingHeading()
@@ -226,17 +232,29 @@ class RadarViewModel: ObservableObject {
     }
 
     func stopTracking() {
+        guard isTracking else { return }
+        isTracking = false
         locationService.stopUpdatingLocation()
         locationService.stopUpdatingHeading()
         motionService.stopUpdates()
         friendService.stopListening()
     }
 
-    /// Call when returning to foreground — restarts CoreMotion without touching Firestore listeners.
-    func resumeMotionUpdates() {
-        // Clear stale matrix so the view shows nothing rather than animating through old positions
-        motionService.rotationMatrix = nil
+    func pauseLiveUpdates() {
+        guard isTracking else { return }
+        locationService.stopUpdatingLocation()
+        locationService.stopUpdatingHeading()
+        motionService.stopUpdates()
+        deviceHeading = 0
+        rotationMatrix = nil
+    }
+
+    /// Call when returning to foreground — restarts live sensors without replaying stale state.
+    func resumeLiveUpdates() {
+        guard isTracking else { return }
         motionService.startUpdates()
+        locationService.startUpdatingLocation()
+        locationService.startUpdatingHeading()
     }
 
     private func updateUserLocation(_ location: CLLocation, userId: String) async throws {
@@ -464,4 +482,3 @@ struct LandmarkCluster: Identifiable {
     var isMixed: Bool { !friends.isEmpty }
     var totalCount: Int { landmarks.count + friends.count }
 }
-

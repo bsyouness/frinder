@@ -6,6 +6,7 @@ class MotionService: ObservableObject {
     static let shared = MotionService()
 
     private let motionManager = CMMotionManager()
+    private var isUpdating = false
 
     @Published var pitch: Double = 0
     @Published var roll: Double = 0
@@ -17,11 +18,13 @@ class MotionService: ObservableObject {
     }
 
     func startUpdates() {
+        guard !isUpdating else { return }
         guard motionManager.isDeviceMotionAvailable else {
             print("Device motion not available")
             return
         }
 
+        isUpdating = true
         motionManager.startDeviceMotionUpdates(using: .xTrueNorthZVertical, to: .main) { [weak self] motion, error in
             guard let self = self, let motion = motion else { return }
 
@@ -33,6 +36,12 @@ class MotionService: ObservableObject {
     }
 
     func stopUpdates() {
+        guard isUpdating else { return }
+        isUpdating = false
         motionManager.stopDeviceMotionUpdates()
+        pitch = 0
+        roll = 0
+        yaw = 0
+        rotationMatrix = nil
     }
 }

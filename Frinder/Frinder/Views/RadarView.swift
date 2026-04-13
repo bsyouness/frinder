@@ -511,6 +511,22 @@ struct EarthView: View {
     private static let cloudImageNames = ["cloud1", "cloud2", "cloud3", "cloud4", "cloud5"]
     private static let cityImageNames = ["building1", "house1", "house2", "house3", "house4", "townhouse1"]
     private static let natureImageNames = ["tree1", "tree2", "tree3", "tree4", "rock1", "rock2"]
+    private static let citySpriteMetrics: [String: SpriteMetrics] = [
+        "building1": .pixels(left: 17, right: 528, top: 13, bottom: 669, width: 566, height: 720),
+        "house1": .pixels(left: 0, right: 414, top: 1, bottom: 225, width: 417, height: 225),
+        "house2": .pixels(left: 0, right: 437, top: 17, bottom: 274, width: 438, height: 274),
+        "house3": .pixels(left: 1, right: 469, top: 9, bottom: 319, width: 502, height: 321),
+        "house4": .pixels(left: 12, right: 515, top: 6, bottom: 292, width: 520, height: 300),
+        "townhouse1": .pixels(left: 2, right: 476, top: 9, bottom: 341, width: 479, height: 352),
+    ]
+    private static let natureSpriteMetrics: [String: SpriteMetrics] = [
+        "tree1": .pixels(left: 14, right: 447, top: 7, bottom: 413, width: 477, height: 425),
+        "tree2": .pixels(left: 0, right: 231, top: 1, bottom: 429, width: 231, height: 429),
+        "tree3": .pixels(left: 6, right: 396, top: 1, bottom: 397, width: 396, height: 397),
+        "tree4": .pixels(left: 6, right: 383, top: 5, bottom: 365, width: 384, height: 371),
+        "rock1": .pixels(left: 3, right: 412, top: 5, bottom: 214, width: 412, height: 216),
+        "rock2": .pixels(left: 3, right: 363, top: 4, bottom: 159, width: 367, height: 180),
+    ]
 
     /// Fixed star world directions + visual properties
     private static let stars: [(
@@ -577,12 +593,12 @@ struct EarthView: View {
             let idx = Int.random(in: 0 ..< 6, using: &rng)
             let h: Double
             if idx == 0 {  // building1 is the tall skyscraper
-                h = Double.random(in: 0.14 ... 0.22, using: &rng)
+                h = Double.random(in: 0.11 ... 0.17, using: &rng)
             } else {
-                h = Double.random(in: 0.05 ... 0.12, using: &rng)
+                h = Double.random(in: 0.04 ... 0.09, using: &rng)
             }
             sprites.append(CitySprite(azimuth: az, heightAngle: h, spriteIndex: idx))
-            let step = h * 1.2 + Double.random(in: 0.015 ... 0.04, using: &rng)
+            let step = h * 0.89 + Double.random(in: 0.014 ... 0.035, using: &rng)
             az += step
         }
         return sprites
@@ -620,6 +636,80 @@ struct EarthView: View {
         let gx = -R.m13
         let gy = -R.m23
         return atan2(gx, -gy)
+    }
+
+    private static func drawSprite(
+        _ image: GraphicsContext.ResolvedImage,
+        named imageName: String,
+        metrics: [String: SpriteMetrics],
+        base: CGPoint,
+        screenHeight: CGFloat,
+        in context: inout GraphicsContext
+    ) {
+        guard screenHeight > 4 else { return }
+
+        let spriteMetrics = metrics[imageName] ?? .fullImage
+        let contentHeightRatio = max(spriteMetrics.contentHeightRatio, 0.001)
+        let drawHeight = screenHeight / contentHeightRatio
+        let drawWidth = drawHeight * image.size.width / max(image.size.height, 1)
+
+        let drawRect = CGRect(
+            x: base.x - drawWidth * spriteMetrics.anchorXRatio,
+            y: base.y - drawHeight * spriteMetrics.contentBottomRatio,
+            width: drawWidth,
+            height: drawHeight
+        )
+        context.draw(image, in: drawRect)
+    }
+
+    private static func horizonY(atX x: CGFloat, from points: [CGPoint]) -> CGFloat? {
+        let sorted = points
+            .filter { $0.x.isFinite && $0.y.isFinite }
+            .sorted { $0.x < $1.x }
+        guard let first = sorted.first, let last = sorted.last else { return nil }
+        if x <= first.x { return first.y }
+        if x >= last.x { return last.y }
+
+        for (left, right) in zip(sorted, sorted.dropFirst()) {
+            guard right.x > left.x else { continue }
+            if x >= left.x && x <= right.x {
+                let t = (x - left.x) / (right.x - left.x)
+                return left.y + (right.y - left.y) * t
+            }
+        }
+
+        return nil
+    }
+
+    private static func projectToScreenWithoutRoll(
+        worldDirection: (x: Double, y: Double, z: Double),
+        rotationMatrix: CMRotationMatrix,
+        roll: Double,
+        screenSize: CGSize
+    ) -> CGPoint? {
+        let dx = rotationMatrix.m11 * worldDirection.x + rotationMatrix.m12 * worldDirection.y + rotationMatrix.m13 * worldDirection.z
+        let dy = rotationMatrix.m21 * worldDirection.x + rotationMatrix.m22 * worldDirection.y + rotationMatrix.m23 * worldDirection.z
+        let dz = rotationMatrix.m31 * worldDirection.x + rotationMatrix.m32 * worldDirection.y + rotationMatrix.m33 * worldDirection.z
+
+        guard dz < 0 else { return nil }
+
+        let cosA = cos(-roll)
+        let sinA = sin(-roll)
+        let ux = dx * cosA - dy * sinA
+        let uy = dx * sinA + dy * cosA
+
+        let angleX = atan2(ux, -dz)
+        let angleY = atan2(uy, -dz)
+
+        let halfW = screenSize.width / 2.0
+        let halfH = screenSize.height / 2.0
+        let hFOVRad = Self.horizontalFOV.toRadians()
+        let vFOVRad = Self.verticalFOV.toRadians()
+
+        return CGPoint(
+            x: halfW + CGFloat(angleX / (hFOVRad / 2.0)) * halfW,
+            y: halfH - CGFloat(angleY / (vFOVRad / 2.0)) * halfH
+        )
     }
 
     var body: some View {
@@ -821,6 +911,15 @@ struct EarthView: View {
                 let moundColor = isDaytime
                     ? Color(red: 0.10, green: 0.45, blue: 0.42)
                     : Color(red: 0.04, green: 0.12, blue: 0.09)
+                let horizon = stride(from: 0.0, through: 360.0, by: 2.0).compactMap { azDeg in
+                    let az = azDeg.toRadians()
+                    return Self.projectToScreenWithoutRoll(
+                        worldDirection: (x: cos(az), y: -sin(az), z: 0.0),
+                        rotationMatrix: R,
+                        roll: roll,
+                        screenSize: size
+                    )
+                }
 
                 func wd(az: Double, el: Double) -> (x: Double, y: Double, z: Double) {
                     let c = cos(el)
@@ -856,41 +955,49 @@ struct EarthView: View {
                     }
 
                     // Draw trees and rocks in front of mounds
-                    let natureImages = Self.natureImageNames.map { context.resolve(Image($0)) }
+                    let natureImages = Self.natureImageNames.map { ($0, context.resolve(Image($0))) }
                     for sprite in natureSprites {
                         let az = sprite.azimuth
                         let h = sprite.heightAngle
                         guard let base = proj(wd(az: az, el: 0)),
                               let top = proj(wd(az: az, el: h)) else { continue }
                         let screenH = base.y - top.y
-                        guard screenH > 4 else { continue }
-                        let img = natureImages[sprite.spriteIndex]
-                        let aspect = img.size.width / max(img.size.height, 1)
-                        let screenW = screenH * aspect
-                        context.draw(img, in: CGRect(
-                            x: base.x - screenW / 2,
-                            y: base.y - screenH,
-                            width: screenW,
-                            height: screenH))
+                        let (imageName, img) = natureImages[sprite.spriteIndex]
+                        Self.drawSprite(
+                            img,
+                            named: imageName,
+                            metrics: Self.natureSpriteMetrics,
+                            base: base,
+                            screenHeight: screenH,
+                            in: &context
+                        )
                     }
                 } else {
-                    // Draw city building sprites
-                    let cityImages = Self.cityImageNames.map { context.resolve(Image($0)) }
+                    // Draw city buildings from the true projected horizon base point, but
+                    // keep their apparent height screen-stable and sink them slightly into
+                    // the horizon so they read as a skyline rather than floating decals.
+                    let cityImages = Self.cityImageNames.map { ($0, context.resolve(Image($0))) }
+                    let verticalFOVRadians = Self.verticalFOV.toRadians()
+                    let horizonInset = size.height * 0.01
                     for sprite in citySprites {
-                        let az = sprite.azimuth
-                        let h = sprite.heightAngle
-                        guard let base = proj(wd(az: az, el: 0)),
-                              let top = proj(wd(az: az, el: h)) else { continue }
-                        let screenH = base.y - top.y
-                        guard screenH > 4 else { continue }
-                        let img = cityImages[sprite.spriteIndex]
-                        let aspect = img.size.width / max(img.size.height, 1)
-                        let screenW = screenH * aspect
-                        context.draw(img, in: CGRect(
-                            x: base.x - screenW / 2,
-                            y: base.y - screenH,
-                            width: screenW,
-                            height: screenH))
+                        guard let basePoint = Self.projectToScreenWithoutRoll(
+                            worldDirection: wd(az: sprite.azimuth, el: 0),
+                            rotationMatrix: R,
+                            roll: roll,
+                            screenSize: size
+                        ) else { continue }
+                        guard let lockedHorizonY = Self.horizonY(atX: basePoint.x, from: horizon) else { continue }
+                        let screenH = CGFloat(sprite.heightAngle / verticalFOVRadians) * size.height * 1.35
+                        let base = CGPoint(x: basePoint.x, y: lockedHorizonY + horizonInset)
+                        let (imageName, img) = cityImages[sprite.spriteIndex]
+                        Self.drawSprite(
+                            img,
+                            named: imageName,
+                            metrics: Self.citySpriteMetrics,
+                            base: base,
+                            screenHeight: screenH,
+                            in: &context
+                        )
                     }
                 }
             }
@@ -934,6 +1041,44 @@ struct NatureSprite {
     let azimuth: Double     // center azimuth in radians
     let heightAngle: Double // angular height for scaling
     let spriteIndex: Int    // 0-3: tree1-4, 4-5: rock1-2
+}
+
+struct SpriteMetrics {
+    let contentLeftRatio: CGFloat
+    let contentRightRatio: CGFloat
+    let contentTopRatio: CGFloat
+    let contentBottomRatio: CGFloat
+
+    static let fullImage = SpriteMetrics(
+        contentLeftRatio: 0,
+        contentRightRatio: 1,
+        contentTopRatio: 0,
+        contentBottomRatio: 1
+    )
+
+    static func pixels(
+        left: Double,
+        right: Double,
+        top: Double,
+        bottom: Double,
+        width: Double,
+        height: Double
+    ) -> SpriteMetrics {
+        SpriteMetrics(
+            contentLeftRatio: CGFloat(left / width),
+            contentRightRatio: CGFloat(right / width),
+            contentTopRatio: CGFloat(top / height),
+            contentBottomRatio: CGFloat(bottom / height)
+        )
+    }
+
+    var contentHeightRatio: CGFloat {
+        max(contentBottomRatio - contentTopRatio, 0.001)
+    }
+
+    var anchorXRatio: CGFloat {
+        (contentLeftRatio + contentRightRatio) / 2
+    }
 }
 
 struct CompassIndicator: View {

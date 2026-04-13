@@ -58,7 +58,9 @@ struct MainTabView: View {
             }
             .onChange(of: scenePhase) { _, newPhase in
                 if newPhase == .active {
-                    radarViewModel.resumeMotionUpdates()
+                    radarViewModel.resumeLiveUpdates()
+                } else if newPhase == .inactive || newPhase == .background {
+                    radarViewModel.pauseLiveUpdates()
                 }
             }
 
