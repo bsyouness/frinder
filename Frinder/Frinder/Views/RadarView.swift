@@ -32,6 +32,8 @@ struct RadarView: View {
                         moonPosition: radarViewModel.moonScreenPosition(in: geometry.size),
                         moonImageName: radarViewModel.moonImageName,
                         rotationMatrix: radarViewModel.rotationMatrix,
+                        deviceHeading: radarViewModel.deviceHeading,
+                        devicePitch: radarViewModel.devicePitch,
                         environmentType: radarViewModel.environmentType,
                         locationSeed: radarViewModel.locationSeed)
 
@@ -497,6 +499,8 @@ struct EarthView: View {
     var moonPosition: CGPoint?
     var moonImageName: String?
     var rotationMatrix: CMRotationMatrix?
+    var deviceHeading: Double = 0
+    var devicePitch: Double = .pi / 2
     var environmentType: EnvironmentType = .nature
     var locationSeed: UInt64 = 0
 
@@ -644,6 +648,7 @@ struct EarthView: View {
         metrics: [String: SpriteMetrics],
         base: CGPoint,
         screenHeight: CGFloat,
+        rotation: Double = 0,
         in context: inout GraphicsContext
     ) {
         guard screenHeight > 4 else { return }
@@ -659,7 +664,20 @@ struct EarthView: View {
             width: drawWidth,
             height: drawHeight
         )
-        context.draw(image, in: drawRect)
+        if abs(rotation) < 0.0001 {
+            context.draw(image, in: drawRect)
+        } else {
+            context.drawLayer { ctx in
+                ctx.translateBy(x: base.x, y: base.y)
+                ctx.rotate(by: Angle(radians: rotation))
+                ctx.draw(image, in: CGRect(
+                    x: -drawWidth * spriteMetrics.anchorXRatio,
+                    y: -drawHeight * spriteMetrics.contentBottomRatio,
+                    width: drawWidth,
+                    height: drawHeight
+                ))
+            }
+        }
     }
 
     private static func horizonY(atX x: CGFloat, from points: [CGPoint]) -> CGFloat? {
@@ -679,37 +697,6 @@ struct EarthView: View {
         }
 
         return nil
-    }
-
-    private static func projectToScreenWithoutRoll(
-        worldDirection: (x: Double, y: Double, z: Double),
-        rotationMatrix: CMRotationMatrix,
-        roll: Double,
-        screenSize: CGSize
-    ) -> CGPoint? {
-        let dx = rotationMatrix.m11 * worldDirection.x + rotationMatrix.m12 * worldDirection.y + rotationMatrix.m13 * worldDirection.z
-        let dy = rotationMatrix.m21 * worldDirection.x + rotationMatrix.m22 * worldDirection.y + rotationMatrix.m23 * worldDirection.z
-        let dz = rotationMatrix.m31 * worldDirection.x + rotationMatrix.m32 * worldDirection.y + rotationMatrix.m33 * worldDirection.z
-
-        guard dz < 0 else { return nil }
-
-        let cosA = cos(-roll)
-        let sinA = sin(-roll)
-        let ux = dx * cosA - dy * sinA
-        let uy = dx * sinA + dy * cosA
-
-        let angleX = atan2(ux, -dz)
-        let angleY = atan2(uy, -dz)
-
-        let halfW = screenSize.width / 2.0
-        let halfH = screenSize.height / 2.0
-        let hFOVRad = Self.horizontalFOV.toRadians()
-        let vFOVRad = Self.verticalFOV.toRadians()
-
-        return CGPoint(
-            x: halfW + CGFloat(angleX / (hFOVRad / 2.0)) * halfW,
-            y: halfH - CGFloat(angleY / (vFOVRad / 2.0)) * halfH
-        )
     }
 
     var body: some View {
@@ -911,15 +898,6 @@ struct EarthView: View {
                 let moundColor = isDaytime
                     ? Color(red: 0.10, green: 0.45, blue: 0.42)
                     : Color(red: 0.04, green: 0.12, blue: 0.09)
-                let horizon = stride(from: 0.0, through: 360.0, by: 2.0).compactMap { azDeg in
-                    let az = azDeg.toRadians()
-                    return Self.projectToScreenWithoutRoll(
-                        worldDirection: (x: cos(az), y: -sin(az), z: 0.0),
-                        rotationMatrix: R,
-                        roll: roll,
-                        screenSize: size
-                    )
-                }
 
                 func wd(az: Double, el: Double) -> (x: Double, y: Double, z: Double) {
                     let c = cos(el)
@@ -973,22 +951,16 @@ struct EarthView: View {
                         )
                     }
                 } else {
-                    // Draw city buildings from the true projected horizon base point, but
-                    // keep their apparent height screen-stable and sink them slightly into
-                    // the horizon so they read as a skyline rather than floating decals.
+                    // Draw city buildings from the exact projected horizon point at each
+                    // sprite azimuth. This keeps every building pegged to a stable world
+                    // point on the horizon while the sprite itself stays upright.
                     let cityImages = Self.cityImageNames.map { ($0, context.resolve(Image($0))) }
                     let verticalFOVRadians = Self.verticalFOV.toRadians()
                     let horizonInset = size.height * 0.01
                     for sprite in citySprites {
-                        guard let basePoint = Self.projectToScreenWithoutRoll(
-                            worldDirection: wd(az: sprite.azimuth, el: 0),
-                            rotationMatrix: R,
-                            roll: roll,
-                            screenSize: size
-                        ) else { continue }
-                        guard let lockedHorizonY = Self.horizonY(atX: basePoint.x, from: horizon) else { continue }
+                        guard let horizonPoint = proj(wd(az: sprite.azimuth, el: 0)) else { continue }
                         let screenH = CGFloat(sprite.heightAngle / verticalFOVRadians) * size.height * 1.35
-                        let base = CGPoint(x: basePoint.x, y: lockedHorizonY + horizonInset)
+                        let base = CGPoint(x: horizonPoint.x, y: horizonPoint.y + horizonInset)
                         let (imageName, img) = cityImages[sprite.spriteIndex]
                         Self.drawSprite(
                             img,
@@ -996,6 +968,7 @@ struct EarthView: View {
                             metrics: Self.citySpriteMetrics,
                             base: base,
                             screenHeight: screenH,
+                            rotation: -roll,
                             in: &context
                         )
                     }

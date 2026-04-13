@@ -12,6 +12,7 @@ enum EnvironmentType {
 class RadarViewModel: ObservableObject {
     @Published var friends: [Friend] = []
     @Published var deviceHeading: Double = 0
+    @Published var devicePitch: Double = .pi / 2
     @Published var rotationMatrix: CMRotationMatrix?
     @Published var currentLocation: CLLocation?
     @Published var isLocationAuthorized = false
@@ -192,6 +193,13 @@ class RadarViewModel: ObservableObject {
             }
             .store(in: &cancellables)
 
+        motionService.$pitch
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] pitch in
+                self?.devicePitch = pitch
+            }
+            .store(in: &cancellables)
+
         // Bind authorization status
         locationService.$authorizationStatus
             .receive(on: DispatchQueue.main)
@@ -246,6 +254,7 @@ class RadarViewModel: ObservableObject {
         locationService.stopUpdatingHeading()
         motionService.stopUpdates()
         deviceHeading = 0
+        devicePitch = .pi / 2
         rotationMatrix = nil
     }
 
