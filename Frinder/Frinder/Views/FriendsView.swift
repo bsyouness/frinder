@@ -2,7 +2,8 @@ import SwiftUI
 
 struct FriendsView: View {
     @EnvironmentObject var friendsViewModel: FriendsViewModel
-    var onNavigate: ((Friend) -> Void)? = nil
+    var onShowInRadar: ((Friend) -> Void)? = nil
+    var onShowOnMap: ((Friend) -> Void)? = nil
     @State private var showAddFriend = false
     @State private var friendEmail = ""
 
@@ -30,7 +31,12 @@ struct FriendsView: View {
                             .font(.subheadline)
                     } else {
                         ForEach(friendsViewModel.friends) { friend in
-                            FriendRow(friend: friend, locationLabel: friendsViewModel.friendLocationLabel(for: friend.id), onNavigate: onNavigate)
+                            FriendRow(
+                                friend: friend,
+                                locationLabel: friendsViewModel.friendLocationLabel(for: friend.id),
+                                onShowInRadar: onShowInRadar,
+                                onShowOnMap: onShowOnMap
+                            )
                                 .swipeActions(edge: .trailing) {
                                     Button(role: .destructive) {
                                         Task { await friendsViewModel.removeFriend(friend) }
@@ -85,8 +91,10 @@ struct FriendsView: View {
 struct FriendRow: View {
     let friend: Friend
     var locationLabel: String? = nil
-    var onNavigate: ((Friend) -> Void)? = nil
+    var onShowInRadar: ((Friend) -> Void)? = nil
+    var onShowOnMap: ((Friend) -> Void)? = nil
     @ObservedObject var settings = AppSettings.shared
+    @State private var showActions = false
 
     private func relativeTime(_ interval: TimeInterval) -> String {
         let minutes = Int(interval / 60)
@@ -157,7 +165,7 @@ struct FriendRow: View {
 
             Spacer()
 
-            if friend.location != nil, onNavigate != nil {
+            if friend.location != nil, onShowInRadar != nil || onShowOnMap != nil {
                 Image(systemName: "location.circle")
                     .foregroundStyle(.blue)
             }
@@ -165,9 +173,29 @@ struct FriendRow: View {
         .padding(.vertical, 4)
         .contentShape(Rectangle())
         .onTapGesture {
-            if friend.location != nil {
-                onNavigate?(friend)
+            guard friend.location != nil else { return }
+
+            let destinations = [onShowInRadar != nil, onShowOnMap != nil].filter { $0 }.count
+            if destinations > 1 {
+                showActions = true
+            } else if let onShowInRadar {
+                onShowInRadar(friend)
+            } else if let onShowOnMap {
+                onShowOnMap(friend)
             }
+        }
+        .confirmationDialog("Open \(friend.displayName)", isPresented: $showActions, titleVisibility: .visible) {
+            if let onShowInRadar {
+                Button("See in Radar") {
+                    onShowInRadar(friend)
+                }
+            }
+            if let onShowOnMap {
+                Button("See on Map") {
+                    onShowOnMap(friend)
+                }
+            }
+            Button("Cancel", role: .cancel) {}
         }
     }
 }

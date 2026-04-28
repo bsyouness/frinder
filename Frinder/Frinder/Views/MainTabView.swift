@@ -5,6 +5,8 @@ struct MainTabView: View {
     @StateObject private var radarViewModel = RadarViewModel()
     @StateObject private var friendsViewModel = FriendsViewModel()
     @State private var selectedTab = 0
+    @State private var selectedMapFriendID: String?
+    @State private var selectedMapFriendRequestID = UUID()
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
@@ -23,10 +25,35 @@ struct MainTabView: View {
                 .tag(0)
 
                 VStack(spacing: 0) {
-                    FriendsView(onNavigate: { friend in
-                        radarViewModel.targetFriend = friend
-                        selectedTab = 0
-                    })
+                    FriendsMapView(
+                        focusedFriendID: $selectedMapFriendID,
+                        focusRequestID: selectedMapFriendRequestID,
+                        onShowInRadar: { friend in
+                            radarViewModel.targetFriend = friend
+                            selectedTab = 0
+                        }
+                    )
+                    .environmentObject(radarViewModel)
+                    BannerAdView()
+                        .frame(height: bannerAdHeight)
+                }
+                .tabItem {
+                    Label("Map", systemImage: "map")
+                }
+                .tag(1)
+
+                VStack(spacing: 0) {
+                    FriendsView(
+                        onShowInRadar: { friend in
+                            radarViewModel.targetFriend = friend
+                            selectedTab = 0
+                        },
+                        onShowOnMap: { friend in
+                            selectedMapFriendID = friend.id
+                            selectedMapFriendRequestID = UUID()
+                            selectedTab = 1
+                        }
+                    )
                     .environmentObject(friendsViewModel)
                     BannerAdView()
                         .frame(height: bannerAdHeight)
@@ -34,7 +61,7 @@ struct MainTabView: View {
                 .tabItem {
                     Label("Friends", systemImage: "person.2")
                 }
-                .tag(1)
+                .tag(2)
 
                 VStack(spacing: 0) {
                     SettingsView()
@@ -44,7 +71,7 @@ struct MainTabView: View {
                 .tabItem {
                     Label("Settings", systemImage: "gear")
                 }
-                .tag(2)
+                .tag(3)
             }
             .onAppear {
                 // Use Firebase Auth user ID directly (works even when Firestore is offline)
