@@ -612,17 +612,23 @@ struct EarthView: View {
         var rng = SeededRandomNumberGenerator(seed: seed &+ 3003)
         var sprites: [NatureSprite] = []
         var az = 0.0
+        var consecutiveRocks = 0
         let twoPi = 2 * Double.pi
         while az < twoPi {
-            let idx = Int.random(in: 0 ..< 6, using: &rng)  // 0-3 trees, 4-5 rocks
+            var idx = Int.random(in: 0 ..< 6, using: &rng)  // 0-3 trees, 4-5 rocks
+            if consecutiveRocks >= 2, idx >= 4 {
+                idx = Int.random(in: 0 ..< 4, using: &rng)
+            }
             let h: Double
             if idx < 4 {  // trees
                 h = Double.random(in: 0.08 ... 0.15, using: &rng)
+                consecutiveRocks = 0
             } else {  // rocks
                 h = Double.random(in: 0.04 ... 0.08, using: &rng)
+                consecutiveRocks += 1
             }
             sprites.append(NatureSprite(azimuth: az, heightAngle: h, spriteIndex: idx))
-            let step = h * 1.0 + Double.random(in: 0.04 ... 0.12, using: &rng)
+            let step = h * 0.89 + Double.random(in: 0.014 ... 0.035, using: &rng)
             az += step
         }
         return sprites
@@ -934,12 +940,12 @@ struct EarthView: View {
 
                     // Draw trees and rocks in front of mounds
                     let natureImages = Self.natureImageNames.map { ($0, context.resolve(Image($0))) }
+                    let verticalFOVRadians = Self.verticalFOV.toRadians()
+                    let horizonInset = size.height * 0.008
                     for sprite in natureSprites {
-                        let az = sprite.azimuth
-                        let h = sprite.heightAngle
-                        guard let base = proj(wd(az: az, el: 0)),
-                              let top = proj(wd(az: az, el: h)) else { continue }
-                        let screenH = base.y - top.y
+                        guard let horizonPoint = proj(wd(az: sprite.azimuth, el: 0)) else { continue }
+                        let screenH = CGFloat(sprite.heightAngle / verticalFOVRadians) * size.height * 1.2
+                        let base = CGPoint(x: horizonPoint.x, y: horizonPoint.y + horizonInset)
                         let (imageName, img) = natureImages[sprite.spriteIndex]
                         Self.drawSprite(
                             img,
@@ -947,6 +953,7 @@ struct EarthView: View {
                             metrics: Self.natureSpriteMetrics,
                             base: base,
                             screenHeight: screenH,
+                            rotation: -roll,
                             in: &context
                         )
                     }
