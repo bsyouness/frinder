@@ -1,4 +1,5 @@
-# Frinder
+# [Frinder](https://frinder.me/)
+[frinder.me](https://frinder.me/)
 
 An iPhone app that shows where your friends are as moving dots when you point your phone around.
 
